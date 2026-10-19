@@ -1,4 +1,4 @@
-const C="sams-v010",A=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest"];
+const C="sams-v011",A=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest"];
 
 self.addEventListener("install",e=>{
   self.skipWaiting();
