@@ -399,12 +399,12 @@ function managerTab(tab){
  if(state.role!=='manager')return;
  manager.tab=tab;
  document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
- show('manager-date-tools',tab!=='users');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users');
+ show('manager-date-tools',tab!=='users'&&tab!=='overview');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview');
  $('manager-content').innerHTML='';
  if(tab==='users')return managerUsers();
  managerLoad();
 }
-function managerOpen(tab='reports'){
+function managerOpen(tab='overview'){
  if(state.role!=='manager'){message('Yönetici yetkisi gerekiyor.',true);return}
  if(state.dirty&&!confirm('Masadaki kaydedilmemiş değişiklikler kaybolmadan önce kaydedilmeli. Yönetici paneline geçilsin mi?'))return;
  show('workspace',false);show('editor',false);show('summary',false);show('manager-screen',true);
@@ -441,17 +441,19 @@ async function managerLoad(){
  if(days>366){managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
  managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
  try{
-  const fromUTC=dateAt(from).toISOString(),toUTC=isoDay(dateAt(to));
+  const fromUTC=(manager.tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=manager.tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
   const needPayment=['overview','reports','analysis','performance','corrections'].includes(manager.tab),needLogs=['logs','performance','overview'].includes(manager.tab);
   const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
   if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity)',fromUTC,toUTC));
  if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
+ if(manager.tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
   if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
   const results=await Promise.all(requested);
   if(results[0].error)throw results[0].error;
   manager.users=results[0].data||[];
   if(needPayment){manager.payments=results[1];if(results[2].error)throw results[2].error;manager.corrections=results[2].data||[];}
-  if(needLogs)manager.events=results[needPayment?3:1];
+  if(needLogs)manager.events=results[needPayment? (manager.tab==='overview'?4:3):1];
+  if(manager.tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
   manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
   if(manager.tab==='overview')managerRenderOverview();
   if(manager.tab==='performance')managerRenderPerformance();
@@ -466,15 +468,23 @@ function paymentCorrection(p){return manager.corrections.find(x=>x.payment_id===
 function correctedAmount(p){return paymentCorrection(p)?.correction_type==='void'?0:Number(p.amount||0)}
 function effectiveMethod(p){return paymentCorrection(p)?.replacement_method||p.payment_method}
 function managerRenderOverview(){
- const today=istDate(),todayPayments=manager.payments.filter(p=>istDate(new Date(p.created_at))===today);
- const open=state.tables.filter(t=>state.orders?.some(o=>o.table_id===t.id&&o.status==='open')).length;
- const valid=todayPayments.filter(p=>correctedAmount(p)>0);
- const avg=valid.length?valid.reduce((v,p)=>v+correctedAmount(p),0)/valid.length:0;
- manager.exportRows=[['Gösterge','Değer'],['Bugünkü ödeme adedi',valid.length],['Ortalama tahsilat',avg]];
+ const today=istDate(),start=dateAt(today),todayPayments=manager.payments.filter(p=>istDate(new Date(p.created_at))===today);
+ const previous=manager.payments.filter(p=>{const t=new Date(p.created_at);return t>=new Date(start.getTime()-30*86400000)&&t<start});
+ const todayTotal=todayPayments.reduce((a,p)=>a+correctedAmount(p),0);
+ const previousTotal=previous.reduce((a,p)=>a+correctedAmount(p),0);
+ const dailyAverage=previousTotal/30;
+ const variation=dailyAverage>0?(todayTotal-dailyAverage)/dailyAverage*100:null;
+ const openOrders=manager.openOrders||[];
+ const openAmount=openOrders.reduce((a,o)=>a+(o.order_items||[]).reduce((b,i)=>b+Number(i.unit_price)*i.quantity,0),0);
+ const metric=(label,value)=>'<div class="manager-stat"><span>'+label+'</span><b>'+value+'</b></div>';
  manager.exportName='sams_genel_bakis';
- $('manager-content').innerHTML='<h3>Günlük yönetici özeti</h3>'+managerOverview(todayPayments)+
- '<div class="manager-stats"><div class="manager-stat"><span>Bugünkü Ortalama Tahsilat</span><b>'+money(avg)+'</b></div><div class="manager-stat"><span>Seçili Aralıkta Ödeme</span><b>'+manager.payments.length+'</b></div></div>'+
- '<p class="note">Bugünün tahsilatı ve seçilen aralığın ödemeleri ayrı gösterilir. İptal edilen işlemler ciroya dahil edilmez. Açık masa sayısı için Masalar ekranına dönün.</p>';
+ manager.exportRows=[['Gösterge','Değer'],['Açık Masa Sayısı',openOrders.length],['Açık Hesap Toplamı (TL)',openAmount],['Bugünkü Tahsilat (TL)',todayTotal],['Önceki 30 Gün Günlük Ortalama (TL)',dailyAverage],['Değişim (%)',variation===null?'Veri yok':variation.toFixed(1)]];
+ $('manager-content').innerHTML='<h3>Anlık işletme özeti</h3>'+
+ '<div class="manager-stats">'+metric('Açık Masa Sayısı',String(openOrders.length))+metric('Açık Hesap Tutarı',money(openAmount))+metric('Bugün Alınan Toplam Ödeme',money(todayTotal))+
+ metric('Son 30 Güne Göre Değişim',variation===null?'Veri yok':(variation>0?'+':'')+variation.toFixed(1)+'%')+'</div>'+
+ '<p class="note">Değişim = bugünkü tahsilatın önceki 30 tam günün günlük ortalamasına göre farkı. Bugün henüz tamamlanmadığı için oran gün içinde değişebilir. Önceki 30 gün ortalaması: '+money(dailyAverage)+'. Açık hesaplar tahsilata dahil değildir.</p>'+
+ '<button id="overview-refresh" class="alt">Verileri Yenile</button>';
+ $('overview-refresh').onclick=()=>managerLoad();
 }
 function managerRenderPerformance(){
  const people=new Map(manager.users.map(u=>[u.user_id,u.display_name]));
@@ -623,7 +633,7 @@ $('refresh').onclick=()=>loadTables();$('save').onclick=save;
 $('back-table').onclick=async()=>{if(state.dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçilsin mi?'))return;state.selected=null;state.dirty=false;show('editor',false);await refreshOrders();window.scrollTo(0,0)};
 $('custom').onclick=addCustom;$('transfer').onclick=transfer;$('split').onclick=split;
 $('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;
-$('manager-dashboard').onclick=()=>managerOpen('reports');$('manager-back').onclick=managerBack;
+$('manager-dashboard').onclick=()=>managerOpen('overview');$('manager-back').onclick=managerBack;
 document.querySelectorAll('[data-manager-tab]').forEach(b=>b.onclick=()=>managerTab(b.dataset.managerTab));
 $('manager-load').onclick=managerLoad;$('manager-today').onclick=()=>managerSetRange('today');$('manager-week').onclick=()=>managerSetRange('week');$('manager-month').onclick=()=>managerSetRange('month');
 $('manager-export').onclick=managerCSV;$('manager-print').onclick=()=>window.print();
