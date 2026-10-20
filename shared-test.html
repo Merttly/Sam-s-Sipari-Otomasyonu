@@ -552,10 +552,10 @@ function managerDayDetail(day){
  payments.filter(p=>correctedAmount(p)>0).forEach(p=>selectedTariffItems(p).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
  const x=totals.get(key)||{name:i.product_name,q:0,amount:0};x.q+=Number(i.quantity);x.amount+=Number(i.unit_price)*Number(i.quantity);totals.set(key,x)}));
  const items=[...totals.values()].sort((a,b)=>b.q-a.q);
- $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+managerOverview(payments)+'<h4>Satılan ürünler</h4>'+
+ $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+'<div class="manager-stats"><div class="manager-stat"><span>Filtrelenen Tahsilat</span><b>'+money(payments.reduce((v,p)=>v+filteredPaymentAmount(p),0))+'</b></div></div><h4>Satılan ürünler</h4>'+
  (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>').join('')+'</tbody></table>':'<p>Ürün kaydı yok.</p>');
  manager.exportName='sams_gunluk_'+day;
- manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),effectiveMethod(x),correctedAmount(x)])];
+ manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),effectiveMethod(x),filteredPaymentAmount(x)])];
 }
 function managerRenderAnalysis(){
  const products=new Map();
