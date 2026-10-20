@@ -347,6 +347,7 @@ function auditSummary(x,previous){
   label='Ödeme alındı';
   body=String(d.method||'Ödeme')+' · '+money(Number(d.amount)||0);
   total=Number(d.amount)||0;
+ }else if(type==='payment_correction'){label='Ödeme düzeltildi';body='Ödeme #'+String(d.payment_id||'')+' · '+String(d.type==='void'?'İptal kaydı':'Yöntem değişikliği')+' · '+String(d.reason||'');
  }else if(type==='table_created'){label='Özel masa açıldı';body=table+' oluşturuldu';
  }else if(type==='table_moved'){label='Masa taşındı';body=table+' → '+String(d.target||'Hedef masa');
  }else if(type==='table_merged'){label='Masalar birleştirildi';body=table+' → '+String(d.target||'Hedef masa');
@@ -509,7 +510,7 @@ function managerOverview(payments){
  const total=payments.reduce((s,p)=>s+correctedAmount(p),0);
  const cash=payments.filter(p=>effectiveMethod(p)==='Nakit').reduce((s,p)=>s+correctedAmount(p),0);
  const card=payments.filter(p=>effectiveMethod(p)==='Kart').reduce((s,p)=>s+correctedAmount(p),0);
- return '<div class="manager-stats">'+[['Toplam Tahsilat',money(total)],['Nakit',money(cash)],['Kart',money(card)],['Ödeme İşlemi',String(payments.length)]].map(x=>'<div class="manager-stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
+ return '<div class="manager-stats">'+[['Toplam Tahsilat',money(total)],['Nakit',money(cash)],['Kart',money(card)],['Geçerli Ödeme',String(payments.filter(p=>correctedAmount(p)>0).length)]].map(x=>'<div class="manager-stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
 }
 function managerRenderReports(){
  const rows=manager.payments,groups=new Map();
