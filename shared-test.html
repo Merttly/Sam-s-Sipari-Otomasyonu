@@ -214,7 +214,12 @@ async function pay(method){
   const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:key});
   if(error)throw error;
   message('Ödeme kaydedildi, hesap kapatıldı.');state.selected=null;state.dirty=false;show('editor',false);await loadTables();
- }catch(e){message('Ödeme kaydedilemedi: '+e.message,true)}
+ }catch(e){
+  // Ağ hatası halinde ödeme sunucuda gerçekleşmiş olabilir; eski hesabı tekrar ödeme ekranında bırakma.
+  state.selected=null;state.dirty=false;show('editor',false);
+  message('Ödeme sonucu doğrulanamadı: '+e.message+' · Tekrar ödeme almadan önce masa ve ödeme kayıtlarını kontrol edin.',true);
+  try{await loadTables()}catch(refreshError){message('Masalar yenilenemedi. Bağlantıyı kontrol edip kayıtları yeniden açın.',true)}
+ }
  finally{state.loading=false}
 }
 
@@ -265,7 +270,11 @@ async function split(){
  wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=true;
  try{const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:crypto.randomUUID()});
  if(error)throw error;close();message('Parça ödeme kaydedildi: '+money(sum));await readSelected();await loadTables();if(!state.order){state.selected=null;show('editor',false)}}
- catch(e){message('Parça ödeme yapılamadı: '+e.message,true);wrap.querySelector('#split-total').textContent='Hata: '+e.message;wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=false}
+ catch(e){
+  close();state.selected=null;state.dirty=false;show('editor',false);
+  message('Parça ödemenin sonucu doğrulanamadı: '+e.message+' · Yeniden ödeme almadan önce kayıtları kontrol edin.',true);
+  try{await loadTables()}catch(refreshError){message('Masalar yenilenemedi. Bağlantıyı kontrol edip kayıtları yeniden açın.',true)}
+ }
  };
  wrap.querySelector('#split-cash').onclick=()=>take('Nakit');
  wrap.querySelector('#split-card').onclick=()=>take('Kart');
