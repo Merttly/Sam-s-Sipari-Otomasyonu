@@ -106,7 +106,7 @@ if(!profile||!profile.active){show('workspace',false);show('auth',false);message
 const {data,error}=await db.from('cafe_tables').select('id,is_custom').eq('archived',false).order('id');
 if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
 if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
-state.tables=data;state.role=profile.role;show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
+state.tables=data;state.role=profile.role;show('report',state.role==='manager');show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 await refreshOrders();subscribe();
 }
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity)').eq('status','open');
@@ -280,6 +280,7 @@ async function split(){
  wrap.querySelector('#split-card').onclick=()=>take('Kart');
 }
 async function report(){
+ if(state.role!=='manager'){message('Gün sonu raporu yalnızca yöneticilere açık.',true);return}
  const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
  if(error){$('summary-title').textContent='Gün Sonu · Hata';$('summary-body').textContent=error.message;show('summary',true);message('Rapor okunamadı: '+error.message,true);return}
  const sums={Nakit:0,Kart:0},products={};(data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount);(p.payment_items||[]).forEach(i=>{const key=i.product_name+' / '+i.unit_price;const q=products[key]||{n:i.product_name,p:Number(i.unit_price),q:0};q.q+=i.quantity;products[key]=q})});
