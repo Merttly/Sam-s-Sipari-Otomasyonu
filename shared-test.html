@@ -161,7 +161,7 @@ function showOptions(title, options){
  document.body.appendChild(overlay);
 }
 function pickProduct(x){
- const base=activeTariff==='esnaf'?(esnafPrices[x.n]??x.p):x.p;
+ const base=activeTariff==='esnaf'?(x.c==='Mocktail'&&x.n==='Baba Yanar'?200:(esnafPrices[x.n]??x.p)):x.p;
  if(x.b){
   const options=x.b==='f'
    ? {Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}
@@ -285,7 +285,7 @@ async function split(){
 }
 async function report(){
  if(state.role!=='manager'){message('Gün sonu raporu yalnızca yöneticilere açık.',true);return}
- const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
+ const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity,tariff)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
  if(error){$('summary-title').textContent='Gün Sonu · Hata';$('summary-body').textContent=error.message;show('summary',true);message('Rapor okunamadı: '+error.message,true);return}
  const sums={Nakit:0,Kart:0},products={};(data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount);(p.payment_items||[]).forEach(i=>{const key=i.product_name+' / '+i.unit_price;const q=products[key]||{n:i.product_name,p:Number(i.unit_price),q:0};q.q+=i.quantity;products[key]=q})});
  $('summary-title').textContent='Gün Sonu · Test';
@@ -393,7 +393,11 @@ async function audit(){
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
 
-const manager={tab:'overview',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor'};
+const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor'};
+const selectedTariffItems=p=>(p.payment_items||[]).filter(i=>manager.tariffFilter==='all'||(i.tariff||'normal')===manager.tariffFilter);
+const tariffFilters=()=>'<div class="row" style="justify-content:start;margin:12px 0"><button class="alt" data-tariff="all">Tümü</button><button class="alt" data-tariff="normal">Normal</button><button class="alt" data-tariff="esnaf">Esnaf</button></div>';
+function bindTariffFilters(draw){document.querySelectorAll('[data-tariff]').forEach(b=>{b.className=b.dataset.tariff===manager.tariffFilter?'':'alt';b.onclick=()=>{manager.tariffFilter=b.dataset.tariff;draw()}})}
+function filteredPaymentAmount(p){if(correctedAmount(p)===0)return 0;return selectedTariffItems(p).reduce((sum,i)=>sum+Number(i.unit_price)*Number(i.quantity),0)}
 const istDate=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 const dateAt=(str)=>new Date(str+'T00:00:00+03:00');
 const dateLabel=(str)=>new Date(str+'T12:00:00+03:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
@@ -529,14 +533,15 @@ function managerOverview(payments){
 function managerRenderReports(){
  const rows=manager.payments,groups=new Map();
  rows.forEach(p=>{const day=istDate(new Date(p.created_at));if(!groups.has(day))groups.set(day,{total:0,cash:0,card:0,count:0});
- const x=groups.get(day),amount=correctedAmount(p);x.total+=amount;if(amount>0)x.count++;
+ const x=groups.get(day),amount=filteredPaymentAmount(p);x.total+=amount;if(amount>0)x.count++;
  if(effectiveMethod(p)==='Nakit')x.cash+=amount;else if(effectiveMethod(p)==='Kart')x.card+=amount;});
  const items=[...groups].sort((a,b)=>b[0].localeCompare(a[0]));
  let selected=manager.selectedDay;if(!groups.has(selected))selected='';
  manager.exportName='sams_gunluk_rapor';manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,v])=>[d,v.total,v.cash,v.card,v.count])];
- $('manager-content').innerHTML=managerOverview(rows)+'<h3>Günlük satış arşivi</h3>'+
+ $('manager-content').innerHTML=tariffFilters()+'<h3>Günlük satış arşivi</h3>'+
  (items.length?'<div class="manager-days">'+items.map(([day,x])=>'<button class="alt" data-report-day="'+esc(day)+'">'+esc(dateLabel(day))+' · '+money(x.total)+'</button>').join('')+'</div>':'<p class="note">Bu tarihlerde ödeme kaydı yok.</p>')+
  '<div id="manager-day-detail"></div><p class="note">Raporlar ödeme kayıtlarından hesaplanır. Tarih değiştirince geçmiş günler yeniden görüntülenebilir. Bu işlem kayıtları kapatmaz veya silmez.</p>';
+ bindTariffFilters(managerRenderReports);
  document.querySelectorAll('[data-report-day]').forEach(b=>b.onclick=()=>managerDayDetail(b.dataset.reportDay));
  if(selected)managerDayDetail(selected);
 }
@@ -544,7 +549,7 @@ function managerDayDetail(day){
  const payments=manager.payments.filter(p=>istDate(new Date(p.created_at))===day);
  manager.selectedDay=day;
  const totals=new Map();
- payments.filter(p=>correctedAmount(p)>0).forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ payments.filter(p=>correctedAmount(p)>0).forEach(p=>selectedTariffItems(p).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
  const x=totals.get(key)||{name:i.product_name,q:0,amount:0};x.q+=Number(i.quantity);x.amount+=Number(i.unit_price)*Number(i.quantity);totals.set(key,x)}));
  const items=[...totals.values()].sort((a,b)=>b.q-a.q);
  $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+managerOverview(payments)+'<h4>Satılan ürünler</h4>'+
@@ -554,13 +559,14 @@ function managerDayDetail(day){
 }
 function managerRenderAnalysis(){
  const products=new Map();
- manager.payments.filter(p=>correctedAmount(p)>0).forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ manager.payments.filter(p=>correctedAmount(p)>0).forEach(p=>selectedTariffItems(p).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
  const o=products.get(key)||{name:i.product_name,q:0,amount:0};o.q+=Number(i.quantity);o.amount+=Number(i.unit_price)*Number(i.quantity);products.set(key,o)}));
  const items=[...products.values()].sort((a,b)=>b.amount-a.amount);
  manager.exportName='sams_satis_analizi';
  manager.exportRows=[['Ürün','Satılan Adet','Ciro (TL)'],...items.map(x=>[x.name,x.q,x.amount])];
- $('manager-content').innerHTML=managerOverview(manager.payments)+'<h3>Ürün satış analizi</h3>'+
+ $('manager-content').innerHTML=tariffFilters()+'<h3>Ürün satış analizi</h3>'+
  (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.q+'</td><td>'+money(x.amount)+'</td></tr>').join('')+'</tbody></table>':'<p class="note">Bu aralıkta satılan ürün yok.</p>');
+ bindTariffFilters(managerRenderAnalysis);
 }
 function managerRenderLogs(){
  const people=new Map(manager.users.map(x=>[x.user_id,x.display_name]));
