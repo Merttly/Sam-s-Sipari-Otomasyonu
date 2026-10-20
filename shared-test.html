@@ -525,7 +525,7 @@ async function managerUsers(){
  managerFeedback('Üyelik onayları ve yetkileri sadece yöneticiler değiştirebilir.');
  manager.users=data||[];
  const rows=manager.users;
- $('manager-content').innerHTML='<h3>Çalışan hesapları</h3><p class="note">Onay bekleyenleri önce Kullanıcı olarak onaylayabilir, sonra Yönetici yapabilirsiniz.</p>'+
+ $('manager-content').innerHTML='<h3>Kullanıcılar</h3><p class="note">Onay bekleyenleri önce Kullanıcı olarak onaylayabilir, sonra Yönetici yapabilirsiniz.</p>'+
  rows.map((x,i)=>{
  const role=x.active?(x.role==='manager'?'Yönetici':'Kullanıcı'):'Onay bekliyor';
  const own=x.user_id===state.user.id;
