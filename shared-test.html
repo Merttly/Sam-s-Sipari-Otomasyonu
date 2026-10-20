@@ -19,14 +19,14 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 <main>
 <div id="msg" class="status">Bağlanılıyor...</div>
 <section id="auth" class="panel hidden">
-<h2>Personel girişi</h2>
+<h2>Personel girişi</h2><label>Adınız (yeni kayıt için)<input id="display-name" autocomplete="name" maxlength="80" placeholder="Adınız"></label>
 <label>E-posta<input id="email" type="email" autocomplete="username" placeholder="ornek@eposta.com"></label>
 <label>Şifre<input id="password" type="password" autocomplete="current-password" placeholder="En az 8 karakter"></label>
 <div class="row"><button id="signin">Giriş yap</button><button id="signup" class="alt">Yeni hesap oluştur</button></div>
-<p class="note">Hesabınızın kafe yetkilisi tarafından onaylanması gerekir. Şifrenizi kimseyle paylaşmayın. Bu ekran şimdilik e-posta/şifre kullanır; personel PIN sistemi sonraki aşamadır.</p>
+<p class="note">Yeni kayıtlar otomatik olarak onay bekleyen Kullanıcı hesabı oluşturur. Yönetici onaylayana kadar masalara erişilemez. Şifrenizi kimseyle paylaşmayın. Şimdilik e-posta/şifre kullanılır.</p>
 </section>
 <section id="workspace" class="hidden">
-<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi (Yönetici)</button></div></div>
+<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi (Yönetici)</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button></div></div>
 <div id="editor" class="panel hidden">
 <div class="row"><h2 id="table-title">Masa</h2><span id="revision" class="muted"></span></div>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Başka cihazdaki güncellemeler bunları otomatik değiştirmez.</p>
@@ -58,15 +58,18 @@ const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRef
 async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user)await loadTables();else{show('workspace',false);message('Lütfen personel hesabınızla giriş yapın.')}}
 async function login(signUp){let email=$('email').value.trim(),password=$('password').value;
 if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
-const {data,error}=signUp?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});
+const displayName=$('display-name').value.trim();if(signUp&&!displayName){message('Yeni kayıt için adınızı yazın.',true);return}const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName}}}):await db.auth.signInWithPassword({email,password});
 if(error){message(error.message,true);return}
-if(signUp)message('Hesap oluşturuldu. E-posta doğrulama gerekiyorsa gelen kutunuzu kontrol edin; ardından yönetici hesabınızı yetkilendirmeli.');
+if(signUp)message('Başvuru oluşturuldu. E-posta doğrulamanızdan sonra yönetici onayını bekleyin; otomatik masa erişimi verilmez.');
 else {message('Giriş başarılı.');await checkAuth()}
 }
-async function loadTables(){const {data,error}=await db.from('cafe_tables').select('id,is_custom').order('id');
+async function loadTables(){const {data:profile,error:profileError}=await db.from('staff_accounts').select('role,active').eq('user_id',state.user.id).maybeSingle();
+if(profileError){message('Kullanıcı durumu okunamadı: '+profileError.message,true);show('workspace',false);return}
+if(!profile||!profile.active){show('workspace',false);show('auth',false);message('Kaydınız alındı. Yönetici onayı bekleniyor. Onaylandıktan sonra sayfayı yenileyin.');return}
+const {data,error}=await db.from('cafe_tables').select('id,is_custom').order('id');
 if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
 if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
-state.tables=data;const {data:profile}=await db.from('staff_accounts').select('role').eq('user_id',state.user.id).maybeSingle();state.role=profile?.role||'staff';show('audit',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
+state.tables=data;state.role=profile.role;show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 await refreshOrders();subscribe();
 }
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity)').eq('status','open');
@@ -174,6 +177,30 @@ async function report(){
  $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+Object.values(products).map(x=>'<p>'+esc(x.n)+' · '+x.q+' adet · '+money(x.p*x.q)+'</p>').join('')+'<p class="note">Günü kapatma / geçmişi silme bu testte kapalı; kayıtlar korunuyor.</p>';
  show('summary',true);
 }
+async function staffAdmin(){
+ if(state.role!=='manager')return;
+ const {data,error}=await db.from('staff_accounts').select('user_id,display_name,role,active,created_at').order('created_at',{ascending:true});
+ if(error){message('Kullanıcılar okunamadı: '+error.message,true);return}
+ $('summary-title').textContent='Kullanıcı Yönetimi · Yönetici';
+ $('summary-body').innerHTML='<p class="note">Yeni üyeler önce onay bekler. Onay verdiğinizde Kullanıcı olurlar; ardından ayrı bir işlemle Yönetici yapabilirsiniz.</p>'+
+ (data||[]).map((x,i)=>{
+ const status=!x.active?'Onay bekliyor':x.role==='manager'?'Yönetici':'Kullanıcı';
+ const options=!x.active?'<button data-user-action="approve" data-user-index="'+i+'">Kullanıcı olarak onayla</button>':
+ x.role==='staff'?'<button data-user-action="promote" data-user-index="'+i+'">Yönetici yap</button><button class="alt" data-user-action="deactivate" data-user-index="'+i+'">Devre dışı bırak</button>':
+ '<button class="alt" data-user-action="demote" data-user-index="'+i+'">Kullanıcı yap</button>';
+ return '<div class="divider"></div><div><b>'+esc(x.display_name)+'</b><br><small>'+esc(status)+'</small><div class="row" style="justify-content:start;margin-top:8px">'+(x.user_id===state.user.id?'<small>Bu hesap sizsiniz</small>':options)+'</div></div>'
+ }).join('');
+ show('summary',true);
+ document.querySelectorAll('[data-user-action]').forEach(b=>b.onclick=async()=>{
+ const target=data[Number(b.dataset.userIndex)],action=b.dataset.userAction;
+ const label={approve:'Kullanıcı olarak onayla',promote:'Yönetici yap',demote:'Kullanıcıya düşür',deactivate:'Devre dışı bırak'}[action];
+ if(!target||!confirm(target.display_name+' → '+label+'?'))return;
+ b.disabled=true;
+ const {error}=await db.rpc('manager_set_staff',{p_user_id:target.user_id,p_action:action});
+ if(error){message('Yetki güncellenemedi: '+error.message,true);b.disabled=false;return}
+ message('Kullanıcı yetkisi güncellendi.');await staffAdmin();
+ });
+}
 async function audit(){
  if(state.role!=='manager')return;
  const {data,error}=await db.from('audit_events').select('event_type,table_id,details,created_at,actor_id').order('created_at',{ascending:false}).limit(100);
@@ -191,7 +218,7 @@ $('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);
 $('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
 $('refresh').onclick=()=>loadTables();$('save').onclick=save;
 $('custom').onclick=addCustom;$('transfer').onclick=transfer;$('split').onclick=split;
-$('report').onclick=report;$('audit').onclick=audit;$('summary-close').onclick=()=>show('summary',false);
+$('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;$('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
 $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);$('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=true;});
 db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false)}});
