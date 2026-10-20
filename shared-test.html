@@ -30,7 +30,7 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 <div id="editor" class="panel hidden">
 <div class="row"><h2 id="table-title">Masa</h2><span id="revision" class="muted"></span></div>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Başka cihazdaki güncellemeler bunları otomatik değiştirmez.</p>
-<h3>Ürün ekle</h3><div id="products" class="grid"></div>
+<h3>Ürün ekle</h3><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
 <div class="divider"></div><h3>Sipariş</h3><div id="lines"></div>
 <label>Not<textarea rows="2" id="note" placeholder="Sipariş notu"></textarea></label>
 <div class="row"><b id="total">0 TL</b><button id="save">Siparişi Kaydet</button></div>
@@ -47,7 +47,8 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 const URL='https://mcpgnkzysyrmmdssvsff.supabase.co', KEY='sb_publishable_98blXN00ND-jZbc0mbizNQ_7V-EnnsB';
 const $=id=>document.getElementById(id),money=n=>Number(n).toLocaleString('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const products=[['Caffe Latte',160],['Americano',140],['Türk Kahvesi',100],['Filtre Kahve',140],['Çay',40],['Su',30],['Soda',60],['Kasap Tost',200]];
+const M=[...["Marry Me Bowl","Hot Honey Bowl","General Bowl","Honey Mustard Bowl","Fajita Bowl","Pesto Bowl","Barbecue Bowl"].map(n=>({c:"Bowls",n,b:"s"})),{c:"Bowls",n:"Fit Bowl",b:"f"},...[["Sünepe",160],["Kasap",200],["Kavkas",220],["Baba",280],["Baba Yanar",300],["Kasap Yanar",220],["Beyaz Yaka",250]].map(([n,p])=>({c:"Tost",n,p,ch:1})),...[["Günün Cookie'si",140],["Günün Tatlısı",250],["Cookie Crumble",250],["Fondue Cup",250],["Extra Dondurma",60],["Extra Çikolata Sosu",100]].map(([n,p])=>({c:"Tatlı",n,p})),...[["Filtre Kahve",140],["Türk Kahvesi",100],["Espresso",120],["Double Espresso",200],["Americano",140],["Caffe Latte",160],["Aromalı Caffe Latte",180],["Mocha & White Mocha",180],["Flat White",160],["Cortado",160],["Cappucino",160],["Macchiato",160],["Caramel Macchiato",180],["Affagato",180]].map(([n,p])=>({c:"Kahve",n,p})),...[["Sam's Mocktail",180],["Blush",160],["Baba Yanar",200],["Yakamoz",160],["Narenciye",160]].map(([n,p])=>({c:"Mocktail",n,p})),...[["Çay",40],["Sütlü Çay",60],["Bitki Çayı",100],["Nane Limon",100],["Sıcak Çikolata",120],["Sahlep",120]].map(([n,p])=>({c:"Sıcak",n,p})),...[["Su",30],["Soda",60],["Limonata",130],["Churchill",80],["Meşrubat",80],["Ayran",50]].map(([n,p])=>({c:"Soğuk",n,p}))];
+const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];let category='Bowls';
 const state={user:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
 function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
@@ -83,13 +84,25 @@ async function openTable(id){if(state.dirty&&!confirm('Kaydedilmemiş değişikl
 function renderEditor(){show('editor',!!state.selected);if(!state.selected)return;
 $('table-title').textContent=state.selected;$('revision').textContent='Sürüm '+(state.order?.version||0);
 show('dirty-notice',state.dirty);
-$('products').innerHTML=products.map((p,i)=>'<button class="alt product" data-product="'+i+'">'+esc(p[0])+' · '+money(p[1])+'</button>').join('');
-document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{const [n,p]=products[Number(b.dataset.product)];let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()});
+$('categories').innerHTML=categories.map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
+document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=categories[Number(b.dataset.category)];renderEditor()});
+const list=M.filter(x=>x.c===category);
+$('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'">'+esc(x.n)+' · '+(x.p?money(x.p):'Seçenekler')+'</button>').join('');
+document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>pickProduct(list[Number(b.dataset.product)]));
 $('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
 document.querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.minus),-1));
 document.querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.plus),1));
 $('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)=>s+x.p*x.q,0));
 $('pay-cash').disabled=$('pay-card').disabled=state.dirty||!state.order||!state.lines.length;
+}
+function addProduct(n,p){let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()}
+function pickProduct(x){
+ if(x.b){const opt=x.b==='f'?{Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}:{Bonfileli:350,Tiftikli:370,Köfteli:280,Tavuklu:260};
+ const names=Object.keys(opt),chosen=prompt(x.n+'\\n'+names.map((n,i)=>(i+1)+'. '+n+' · '+money(opt[n])).join('\\n')+'\\nSeçenek numarası:');
+ if(chosen===null)return;const i=Number(chosen)-1;if(!Number.isInteger(i)||i<0||i>=names.length){message('Geçersiz seçenek.',true);return}
+ addProduct(x.n+' · '+names[i],opt[names[i]]);
+ }else if(x.ch){const chosen=confirm(x.n+' · Cheddar +40 TL eklemek ister misiniz?');addProduct(x.n+(chosen?' · Cheddar':''),x.p+(chosen?40:0));}
+ else addProduct(x.n,x.p);
 }
 function markDirty(){state.dirty=true;renderEditor()}
 function change(i,d){let x=state.lines[i];x.q+=d;if(x.q<=0)state.lines.splice(i,1);markDirty()}
