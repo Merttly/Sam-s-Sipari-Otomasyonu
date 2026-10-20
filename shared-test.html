@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sam's — Ortak Sipariş Testi</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#171714;color:#f7f4e9}
+*{box-sizing:border-box}body{margin:0}header{padding:16px;background:#20201d;border-bottom:1px solid #3b3b34;display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:20px;margin:0}small,.muted{color:#c6c6b9}main{max-width:760px;margin:auto;padding:18px}
+.panel{background:#252520;border:1px solid #44443a;border-radius:14px;padding:18px;margin-bottom:16px}
+h2{margin:0 0 14px;font-size:20px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+button,input,textarea,select{font:inherit}button{background:#a8d4af;color:#17221b;border:0;border-radius:10px;padding:13px;cursor:pointer;font-weight:650}button:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:#3b3b35;color:#faf9f0}button.warn{background:#c89c82;color:#211610}
+input,textarea{width:100%;background:#131310;color:#faf9f0;border:1px solid #666659;border-radius:9px;padding:12px;margin:6px 0 13px}
+table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;padding:10px 2px}td:last-child{text-align:right}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.row button{padding:8px 12px}
+.note{font-size:13px;color:#c6c6b9;line-height:1.5}.status{padding:12px;margin:12px 0;border-radius:9px;background:#35362a}.error{background:#63312d}.good{background:#274732}
+.hidden{display:none!important}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}.divider{border-top:1px solid #55554a;margin:14px 0}
+</style></head><body>
+<header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
+<main>
+<div id="msg" class="status">Bağlanılıyor...</div>
+<section id="auth" class="panel hidden">
+<h2>Personel girişi</h2>
+<label>E-posta<input id="email" type="email" autocomplete="username" placeholder="ornek@eposta.com"></label>
+<label>Şifre<input id="password" type="password" autocomplete="current-password" placeholder="En az 8 karakter"></label>
+<div class="row"><button id="signin">Giriş yap</button><button id="signup" class="alt">Yeni hesap oluştur</button></div>
+<p class="note">Hesabınızın kafe yetkilisi tarafından onaylanması gerekir. Şifrenizi kimseyle paylaşmayın. Bu ekran şimdilik e-posta/şifre kullanır; personel PIN sistemi sonraki aşamadır.</p>
+</section>
+<section id="workspace" class="hidden">
+<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div></div>
+<div id="editor" class="panel hidden">
+<div class="row"><h2 id="table-title">Masa</h2><span id="revision" class="muted"></span></div>
+<p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Başka cihazdaki güncellemeler bunları otomatik değiştirmez.</p>
+<h3>Ürün ekle</h3><div id="products" class="grid"></div>
+<div class="divider"></div><h3>Sipariş</h3><div id="lines"></div>
+<label>Not<textarea rows="2" id="note" placeholder="Sipariş notu"></textarea></label>
+<div class="row"><b id="total">0 TL</b><button id="save">Siparişi Kaydet</button></div>
+<div class="divider"></div>
+<div class="row"><button id="pay-cash" class="warn">Nakit Kapat</button><button id="pay-card" class="alt">Kart Kapat</button></div>
+<p class="note">Ödeme yalnızca kaydedilmiş ürünler için yapılır. Tam ödeme için hesap kapatma aktiftir; parça ödeme, masa taşıma ve yönetici ekranı sonraki testlere kalacak.</p>
+</div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(()=>{
+'use strict';
+const URL='https://mcpgnkzysyrmmdssvsff.supabase.co', KEY='sb_publishable_98blXN00ND-jZbc0mbizNQ_7V-EnnsB';
+const $=id=>document.getElementById(id),money=n=>Number(n).toLocaleString('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const products=[['Caffe Latte',160],['Americano',140],['Türk Kahvesi',100],['Filtre Kahve',140],['Çay',40],['Su',30],['Soda',60],['Kasap Tost',200]];
+const state={user:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
+function show(id,v){$(id).classList.toggle('hidden',!v)}
+function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
+if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
+const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
+async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user)await loadTables();else{show('workspace',false);message('Lütfen personel hesabınızla giriş yapın.')}}
+async function login(signUp){let email=$('email').value.trim(),password=$('password').value;
+if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
+const {data,error}=signUp?await db.auth.signUp({email,password}):await db.auth.signInWithPassword({email,password});
+if(error){message(error.message,true);return}
+if(signUp)message('Hesap oluşturuldu. E-posta doğrulama gerekiyorsa gelen kutunuzu kontrol edin; ardından yönetici hesabınızı yetkilendirmeli.');
+else {message('Giriş başarılı.');await checkAuth()}
+}
+async function loadTables(){const {data,error}=await db.from('cafe_tables').select('id,is_custom').order('id');
+if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
+if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
+state.tables=data.filter(x=>!x.is_custom);show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız.');
+await refreshOrders();subscribe();
+}
+async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity)').eq('status','open');
+if(error){message('Siparişler okunamadı: '+error.message,true);return}
+const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));
+$('tables').innerHTML=state.tables.map(t=>{const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);return '<button data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+'">'+esc(t.id)+'<br><small>'+(o?money(sum):'Boş')+'</small></button>'}).join('');
+document.querySelectorAll('[data-table]').forEach(b=>b.onclick=()=>openTable(b.dataset.table));
+if(state.selected&&!state.dirty) await readSelected();
+}
+async function readSelected(){let {data,error}=await db.from('orders').select('id,table_id,note,status,version,order_items(id,product_name,unit_price,quantity)').eq('table_id',state.selected).eq('status','open').maybeSingle();
+if(error){message('Masa okunamadı: '+error.message,true);return}
+state.order=data;state.lines=(data?.order_items||[]).map(x=>({id:x.id,n:x.product_name,p:Number(x.unit_price),q:x.quantity}));
+state.note=data?.note||'';state.dirty=false;renderEditor();
+}
+async function openTable(id){if(state.dirty&&!confirm('Kaydedilmemiş değişiklikler silinsin mi?'))return;state.selected=id;await readSelected()}
+function renderEditor(){show('editor',!!state.selected);if(!state.selected)return;
+$('table-title').textContent=state.selected;$('revision').textContent='Sürüm '+(state.order?.version||0);
+show('dirty-notice',state.dirty);
+$('products').innerHTML=products.map((p,i)=>'<button class="alt product" data-product="'+i+'">'+esc(p[0])+' · '+money(p[1])+'</button>').join('');
+document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{const [n,p]=products[Number(b.dataset.product)];let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()});
+$('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
+document.querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.minus),-1));
+document.querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.plus),1));
+$('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)=>s+x.p*x.q,0));
+$('pay-cash').disabled=$('pay-card').disabled=state.dirty||!state.order||!state.lines.length;
+}
+function markDirty(){state.dirty=true;renderEditor()}
+function change(i,d){let x=state.lines[i];x.q+=d;if(x.q<=0)state.lines.splice(i,1);markDirty()}
+async function save(){if(!state.selected||state.loading)return;state.loading=true;$('save').disabled=true;
+try{let payload=state.lines.map(x=>({n:x.n,p:x.p,q:x.q})),{data,error}=await db.rpc('cafe_save_order',{p_table:state.selected,p_version:state.order?.version||0,p_items:payload,p_note:$('note').value});
+if(error)throw error;
+state.dirty=false;await readSelected();await refreshOrders();message('Sipariş kaydedildi. Diğer cihazlar da görebilir.');
+}catch(e){message('Kaydedilemedi: '+e.message+' · Başka cihaz değişiklik yaptıysa sayfayı yenileyin.',true)}finally{state.loading=false;$('save').disabled=false}}
+async function pay(method){if(!state.order||state.dirty||state.loading)return;
+const sum=state.lines.reduce((a,x)=>a+x.p*x.q,0);
+if(!confirm(state.selected+' · '+money(sum)+' · '+method+' ile hesap kapatılsın mı?'))return;
+state.loading=true;
+try{const lines=state.lines.map(x=>({id:x.id,q:x.q}));if(lines.some(x=>!x.id))throw Error('Önce siparişi kaydedin.');
+const key=crypto.randomUUID();const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:key});
+if(error)throw error;message('Ödeme kaydedildi. Hesap kapatıldı.');await readSelected();await refreshOrders();
+}catch(e){message('Ödeme kaydedilemedi: '+e.message,true)}finally{state.loading=false}}
+function subscribe(){if(state.channel)db.removeChannel(state.channel);
+state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>refreshOrders())
+.on('postgres_changes',{event:'*',schema:'public',table:'order_items'},()=>refreshOrders())
+.subscribe();
+}
+$('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);
+$('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
+$('refresh').onclick=()=>refreshOrders();$('save').onclick=save;
+$('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
+$('note').addEventListener('input',()=>{state.dirty=true;show('dirty-notice',true)});
+db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false)}});
+checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
+})();
+</script></body></html>
