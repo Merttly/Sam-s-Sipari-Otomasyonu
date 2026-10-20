@@ -73,7 +73,7 @@ else {message('Giriş başarılı.');await checkAuth()}
 async function loadTables(){const {data:profile,error:profileError}=await db.from('staff_accounts').select('role,active').eq('user_id',state.user.id).maybeSingle();
 if(profileError){message('Kullanıcı durumu okunamadı: '+profileError.message,true);show('workspace',false);return}
 if(!profile||!profile.active){show('workspace',false);show('auth',false);message('Kaydınız alındı. Yönetici onayı bekleniyor. Onaylandıktan sonra sayfayı yenileyin.');return}
-const {data,error}=await db.from('cafe_tables').select('id,is_custom').order('id');
+const {data,error}=await db.from('cafe_tables').select('id,is_custom').eq('archived',false).order('id');
 if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
 if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
 state.tables=data;state.role=profile.role;show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
@@ -183,7 +183,7 @@ async function pay(method){
   const key=crypto.randomUUID();
   const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:key});
   if(error)throw error;
-  message('Ödeme kaydedildi, hesap kapatıldı.');await readSelected();await refreshOrders();
+  message('Ödeme kaydedildi, hesap kapatıldı.');state.selected=null;state.dirty=false;show('editor',false);await loadTables();
  }catch(e){message('Ödeme kaydedilemedi: '+e.message,true)}
  finally{state.loading=false}
 }
@@ -234,7 +234,7 @@ async function split(){
  if(!confirm(method+' · '+money(sum)+' parça ödeme alınsın mı?'))return;
  wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=true;
  try{const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:crypto.randomUUID()});
- if(error)throw error;close();message('Parça ödeme kaydedildi: '+money(sum));await readSelected();await refreshOrders();}
+ if(error)throw error;close();message('Parça ödeme kaydedildi: '+money(sum));await readSelected();await loadTables();if(!state.order){state.selected=null;show('editor',false)}}
  catch(e){message('Parça ödeme yapılamadı: '+e.message,true);wrap.querySelector('#split-total').textContent='Hata: '+e.message;wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=false}
  };
  wrap.querySelector('#split-cash').onclick=()=>take('Nakit');
