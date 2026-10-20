@@ -55,7 +55,7 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 const URL='https://mcpgnkzysyrmmdssvsff.supabase.co', KEY='sb_publishable_98blXN00ND-jZbc0mbizNQ_7V-EnnsB';
 const $=id=>document.getElementById(id),money=n=>Number(n).toLocaleString('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const M=[...["Marry Me Bowl","Hot Honey Bowl","General Bowl","Honey Mustard Bowl","Fajita Bowl","Pesto Bowl","Barbecue Bowl"].map(n=>({c:"Bowls",n,b:"s"})),{c:"Bowls",n:"Fit Bowl",b:"f"},...[["Sünepe",160],["Kasap",200],["Kavkas",220],["Baba",280],["Baba Yanar",300],["Kasap Yanar",220],["Beyaz Yaka",250]].map(([n,p])=>({c:"Tost",n,p,ch:1})),...[["Günün Cookie'si",140],["Günün Tatlısı",250],["Cookie Crumble",250],["Fondue Cup",250],["Extra Dondurma",60],["Extra Çikolata Sosu",100]].map(([n,p])=>({c:"Tatlı",n,p})),...[["Filtre Kahve",140],["Türk Kahvesi",100],["Espresso",120],["Double Espresso",200],["Americano",140],["Caffe Latte",160],["Aromalı Caffe Latte",180],["Mocha & White Mocha",180],["Flat White",160],["Cortado",160],["Cappucino",160],["Macchiato",160],["Caramel Macchiato",180],["Affagato",180]].map(([n,p])=>({c:"Kahve",n,p})),...[["Sam's Mocktail",180],["Blush",160],["Baba Yanar",200],["Yakamoz",160],["Narenciye",160]].map(([n,p])=>({c:"Mocktail",n,p})),...[["Çay",40],["Sütlü Çay",60],["Bitki Çayı",100],["Nane Limon",100],["Sıcak Çikolata",120],["Sahlep",120]].map(([n,p])=>({c:"Sıcak",n,p})),...[["Su",30],["Soda",60],["Limonata",130],["Churchill",80],["Meşrubat",80],["Ayran",50]].map(([n,p])=>({c:"Soğuk",n,p}))];
+const M=[...["Marry Me Bowl","Hot Honey Bowl","General Bowl","Honey Mustard Bowl","Fajita Bowl","Pesto Bowl","Barbecue Bowl"].map(n=>({c:"Bowls",n,b:"s"})),{c:"Bowls",n:"Fit Bowl",b:"f"},...[["Sünepe",160],["Kasap",200],["Kavkas",220],["Baba",280],["Baba Yanar",300],["Kasap Yanar",220],["Beyaz Yaka",250]].map(([n,p])=>({c:"Tost",n,p,ch:1})),...[["Günün Cookie'si",140],["Günün Tatlısı",250],["Cookie Crumble",250],["Fondue Cup",250]].map(([n,p])=>({c:"Tatlı",n,p})),...[["Filtre Kahve",140],["Türk Kahvesi",100],["Espresso",120],["Double Espresso",200],["Americano",140],["Caffe Latte",160],["Aromalı Caffe Latte",180],["Mocha & White Mocha",180],["Flat White",160],["Cortado",160],["Cappucino",160],["Macchiato",160],["Caramel Macchiato",180],["Affagato",180]].map(([n,p])=>({c:"Kahve",n,p})),...[["Sam's Mocktail",180],["Blush",160],["Baba Yanar",200],["Yakamoz",160],["Narenciye",160]].map(([n,p])=>({c:"Mocktail",n,p})),...[["Çay",40],["Sütlü Çay",60],["Bitki Çayı",100],["Nane Limon",100],["Sıcak Çikolata",120],["Sahlep",120]].map(([n,p])=>({c:"Sıcak",n,p})),...[["Su",30],["Soda",60],["Limonata",130],["Churchill",80],["Meşrubat",80],["Ayran",50]].map(([n,p])=>({c:"Soğuk",n,p}))];
 const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];let category='Bowls';
 const state={user:null,role:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
 function show(id,v){$(id).classList.toggle('hidden',!v)}
@@ -139,6 +139,13 @@ function pickProduct(x){
   showOptions(x.n,[
    {label:'Normal',price:x.p,onSelect:()=>addProduct(x.n,x.p)},
    {label:'Cheddar +40',price:x.p+40,onSelect:()=>addProduct(x.n+' · Cheddar',x.p+40)}
+  ]);
+ }else if(x.c==='Tatlı'){
+  showOptions(x.n,[
+   {label:'Normal',price:x.p,onSelect:()=>addProduct(x.n,x.p)},
+   {label:'Extra Dondurma +60 TL',price:x.p+60,onSelect:()=>addProduct(x.n+' · Extra Dondurma',x.p+60)},
+   {label:'Extra Çikolata Sosu +100 TL',price:x.p+100,onSelect:()=>addProduct(x.n+' · Extra Çikolata Sosu',x.p+100)},
+   {label:'İkisi Birlikte +160 TL',price:x.p+160,onSelect:()=>addProduct(x.n+' · Extra Dondurma + Extra Çikolata Sosu',x.p+160)}
   ]);
  }else addProduct(x.n,x.p);
 }
