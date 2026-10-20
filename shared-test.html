@@ -239,7 +239,7 @@ async function staffAdmin(){
  });
 }
 function auditProductList(items){
- return (Array.isArray(items)?items:[]).map(x=>(Number(x.q)||0)+' × '+String(x.n||'Ürün')+' · '+money((Number(x.p)||0)*(Number(x.q)||0))).join('\\n');
+ return (Array.isArray(items)?items:[]).map(x=>(Number(x.q)||0)+' × '+String(x.n||'Ürün')+' · '+money((Number(x.p)||0)*(Number(x.q)||0))).join('\n');
 }
 function auditSummary(x,previous){
  const d=x.details||{},type=x.event_type||'',table=x.table_id||'Sistem';
@@ -260,7 +260,7 @@ function auditSummary(x,previous){
     if(diff>0)changes.push('+ '+diff+' × '+name);
     if(diff<0)changes.push('− '+(-diff)+' × '+name);
    }
-   body=changes.length?changes.join('\\n'):'Sipariş bilgileri güncellendi';
+   body=changes.length?changes.join('\n'):'Sipariş bilgileri güncellendi';
   }else body=now.length?auditProductList(now):'Boş sipariş kaydedildi';
  }else if(type==='payment'){
   label='Ödeme alındı';
