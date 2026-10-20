@@ -13,7 +13,7 @@ input,textarea{width:100%;background:#131310;color:#faf9f0;border:1px solid #666
 table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;padding:10px 2px}td:last-child{text-align:right}
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.row button{padding:8px 12px}
 .note{font-size:13px;color:#c6c6b9;line-height:1.5}.status{padding:12px;margin:12px 0;border-radius:9px;background:#35362a}.error{background:#63312d}.good{background:#274732}
-.hidden{display:none!important}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}.divider{border-top:1px solid #55554a;margin:14px 0}
+.hidden{display:none!important}#summary:not(.hidden){position:fixed;z-index:2000;inset:12px;margin:0;overflow-y:auto;max-width:none;box-shadow:0 0 0 999px #000b;border:2px solid #9cbda2}#summary-body{padding-bottom:22px}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}.divider{border-top:1px solid #55554a;margin:14px 0}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -178,9 +178,16 @@ async function report(){
  show('summary',true);
 }
 async function staffAdmin(){
- if(state.role!=='manager')return;
- const {data,error}=await db.from('staff_accounts').select('user_id,display_name,role,active,created_at').order('created_at',{ascending:true});
- if(error){message('Kullanıcılar okunamadı: '+error.message,true);return}
+ if(state.role!=='manager'){message('Bu panel yalnızca yöneticilere açık.',true);return}
+ $('summary-title').textContent='Kullanıcı Yönetimi · Yükleniyor';
+ $('summary-body').innerHTML='<p>Kullanıcı listesi yükleniyor...</p>';
+ show('summary',true);
+ let data,error;
+ try{
+  const result=await db.from('staff_accounts').select('user_id,display_name,role,active,created_at').order('created_at',{ascending:true});
+  data=result.data;error=result.error;
+ }catch(e){error=e}
+ if(error){$('summary-title').textContent='Kullanıcı Yönetimi · Hata';$('summary-body').textContent='Liste yüklenemedi: '+(error.message||String(error));message('Kullanıcılar okunamadı: '+(error.message||String(error)),true);return}
  $('summary-title').textContent='Kullanıcı Yönetimi · Yönetici';
  $('summary-body').innerHTML='<p class="note">Yeni üyeler önce onay bekler. Onay verdiğinizde Kullanıcı olurlar; ardından ayrı bir işlemle Yönetici yapabilirsiniz.</p>'+
  (data||[]).map((x,i)=>{
