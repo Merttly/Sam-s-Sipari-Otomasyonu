@@ -38,7 +38,7 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 <div id="editor" class="panel hidden">
 <div class="row"><button id="back-table" class="alt">← Masalara Dön</button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Hesap/taşıma işleminden önce bu değişiklikler kaydedilecek. Başka cihazdaki güncellemeler birbiri üzerine yazılmaz.</p>
-<h3>Ürün ekle</h3><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
+<h3>Ürün ekle</h3><div class="row" style="margin-bottom:12px"><button id="tariff-normal">Normal Menü</button><button id="tariff-esnaf" class="alt">Esnaf Tarifesi</button></div><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
 <div class="divider"></div><h3>Sipariş</h3><div id="lines"></div>
 <label>Not<textarea rows="2" id="note" placeholder="Sipariş notu"></textarea></label>
 <div class="row"><b id="total">0 TL</b><button id="save">Siparişi Kaydet</button></div>
@@ -86,7 +86,9 @@ const URL='https://mcpgnkzysyrmmdssvsff.supabase.co', KEY='sb_publishable_98blXN
 const $=id=>document.getElementById(id),money=n=>Number(n).toLocaleString('tr-TR',{style:'currency',currency:'TRY',maximumFractionDigits:2});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const M=[...["Marry Me Bowl","Hot Honey Bowl","General Bowl","Honey Mustard Bowl","Fajita Bowl","Pesto Bowl","Barbecue Bowl"].map(n=>({c:"Bowls",n,b:"s"})),{c:"Bowls",n:"Fit Bowl",b:"f"},...[["Sünepe",160],["Kasap",200],["Kavkas",220],["Baba",280],["Baba Yanar",300],["Kasap Yanar",220],["Beyaz Yaka",250]].map(([n,p])=>({c:"Tost",n,p,ch:1})),...[["Günün Cookie'si",140],["Günün Tatlısı",250],["Cookie Crumble",250],["Fondue Cup",250]].map(([n,p])=>({c:"Tatlı",n,p})),...[["Filtre Kahve",140],["Türk Kahvesi",100],["Espresso",120],["Double Espresso",200],["Americano",140],["Caffe Latte",160],["Aromalı Caffe Latte",180],["Mocha & White Mocha",180],["Flat White",160],["Cortado",160],["Cappucino",160],["Macchiato",160],["Caramel Macchiato",180],["Affagato",180]].map(([n,p])=>({c:"Kahve",n,p})),...[["Sam's Mocktail",180],["Blush",160],["Baba Yanar",200],["Yakamoz",160],["Narenciye",160]].map(([n,p])=>({c:"Mocktail",n,p})),...[["Çay",40],["Sütlü Çay",60],["Bitki Çayı",100],["Nane Limon",100],["Sıcak Çikolata",120],["Sahlep",120]].map(([n,p])=>({c:"Sıcak",n,p})),...[["Su",30],["Soda",60],["Limonata",130],["Churchill",80],["Meşrubat",80],["Ayran",50]].map(([n,p])=>({c:"Soğuk",n,p}))];
-const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];let category='Bowls';
+const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];let category='Bowls';let activeTariff='normal';
+const esnafPrices={'Sünepe':140,'Kasap':180,'Kavkas':180,'Baba':240,'Baba Yanar':240,'Kasap Yanar':180,'Beyaz Yaka':250,'Americano':125,'Caffe Latte':125,'Aromalı Caffe Latte':125,'Sam\'s Mocktail':150,'Blush':150,'Baba Yanar Mocktail':200,'Yakamoz':150,'Narenciye':150,'Çay':20,'Su':15,'Soda':40,'Limonata':100,'Churchill':80,'Meşrubat':80,'Burn':80};
+const bowlEsnaf=(name,protein)=>({Bonfileli:name==='Fit Bowl'?330:350,Tiftikli:name==='Fit Bowl'?350:370,Köfteli:240,Tavuklu:220})[protein];
 const state={user:null,role:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
 function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
@@ -109,34 +111,35 @@ if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe perso
 state.tables=data;state.role=profile.role;show('report',state.role==='manager');show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 await refreshOrders();subscribe();
 }
-async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity)').eq('status','open');
+async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity,tariff)').eq('status','open');
 if(error){message('Siparişler okunamadı: '+error.message,true);return}
 const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));
 $('tables').innerHTML=state.tables.map(t=>{const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);return '<button data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+'">'+esc(t.id)+'<br><small>'+(o?money(sum):'Boş')+'</small></button>'}).join('');
 document.querySelectorAll('[data-table]').forEach(b=>b.onclick=()=>openTable(b.dataset.table));
 if(state.selected&&!state.dirty) await readSelected();
 }
-async function readSelected(){let {data,error}=await db.from('orders').select('id,table_id,note,status,version,order_items(id,product_name,unit_price,quantity)').eq('table_id',state.selected).eq('status','open').maybeSingle();
+async function readSelected(){let {data,error}=await db.from('orders').select('id,table_id,note,status,version,order_items(id,product_name,unit_price,quantity,tariff)').eq('table_id',state.selected).eq('status','open').maybeSingle();
 if(error){message('Masa okunamadı: '+error.message,true);return}
-state.order=data;state.lines=(data?.order_items||[]).map(x=>({id:x.id,n:x.product_name,p:Number(x.unit_price),q:x.quantity}));
+state.order=data;state.lines=(data?.order_items||[]).map(x=>({id:x.id,n:x.product_name,p:Number(x.unit_price),q:x.quantity,tariff:x.tariff||'normal'}));
 state.note=data?.note||'';state.dirty=false;renderEditor();
 }
 async function openTable(id){if(state.dirty&&!confirm('Kaydedilmemiş değişiklikler silinsin mi?'))return;state.selected=id;await readSelected()}
 function renderEditor(){show('editor',!!state.selected);if(!state.selected)return;
 $('table-title').textContent=state.selected;$('revision').textContent='Sürüm '+(state.order?.version||0);
 show('dirty-notice',state.dirty);
+ $('tariff-normal').className=activeTariff==='normal'?'':'alt';$('tariff-esnaf').className=activeTariff==='esnaf'?'':'alt';
 $('categories').innerHTML=categories.map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
 document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=categories[Number(b.dataset.category)];renderEditor()});
 const list=M.filter(x=>x.c===category);
-$('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'">'+esc(x.n)+' · '+(x.p?money(x.p):'Seçenekler')+'</button>').join('');
+$('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'">'+esc(x.n)+' · '+(x.b?'Seçenekler':money(activeTariff==='esnaf'?(esnafPrices[x.n]??x.p):x.p))+'</button>').join('');
 document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>pickProduct(list[Number(b.dataset.product)]));
-$('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
+$('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+(x.tariff==='esnaf'?' · Esnaf':'')+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
 document.querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.minus),-1));
 document.querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.plus),1));
 $('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)=>s+x.p*x.q,0));
 $('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=state.loading||!state.lines.length;
 }
-function addProduct(n,p){let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()}
+function addProduct(n,p,tariff=activeTariff){let x=state.lines.find(z=>z.n===n&&z.p===p&&z.tariff===tariff);if(x)x.q++;else state.lines.push({n,p,q:1,tariff});markDirty()}
 function showOptions(title, options){
  const overlay=document.createElement('div');overlay.className='option-overlay';
  const sheet=document.createElement('div');sheet.className='option-sheet';
@@ -158,26 +161,27 @@ function showOptions(title, options){
  document.body.appendChild(overlay);
 }
 function pickProduct(x){
+ const base=activeTariff==='esnaf'?(esnafPrices[x.n]??x.p):x.p;
  if(x.b){
   const options=x.b==='f'
    ? {Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}
    : {Bonfileli:350,Tiftikli:370,Köfteli:280,Tavuklu:260};
   showOptions(x.n,Object.entries(options).map(([name,price])=>({
-   label:name,price,onSelect:()=>addProduct(x.n+' · '+name,price)
+   label:name,price,onSelect:()=>addProduct(x.n+' · '+name,activeTariff==='esnaf'?bowlEsnaf(x.n,name):price)
   })));
  }else if(x.ch){
   showOptions(x.n,[
-   {label:'Normal',price:x.p,onSelect:()=>addProduct(x.n,x.p)},
-   {label:'Cheddar +40',price:x.p+40,onSelect:()=>addProduct(x.n+' · Cheddar',x.p+40)}
+   {label:'Normal',price:base,onSelect:()=>addProduct(x.n,base)},
+   {label:'Cheddar +40',price:base+40,onSelect:()=>addProduct(x.n+' · Cheddar',base+40)}
   ]);
  }else if(x.c==='Tatlı'){
   showOptions(x.n,[
-   {label:'Normal',price:x.p,onSelect:()=>addProduct(x.n,x.p)},
+   {label:'Normal',price:base,onSelect:()=>addProduct(x.n,base)},
    {label:'Extra Dondurma +60 TL',price:x.p+60,onSelect:()=>addProduct(x.n+' · Extra Dondurma',x.p+60)},
    {label:'Extra Çikolata Sosu +100 TL',price:x.p+100,onSelect:()=>addProduct(x.n+' · Extra Çikolata Sosu',x.p+100)},
    {label:'İkisi Birlikte +160 TL',price:x.p+160,onSelect:()=>addProduct(x.n+' · Extra Dondurma + Extra Çikolata Sosu',x.p+160)}
   ]);
- }else addProduct(x.n,x.p);
+ }else addProduct(x.n,base);
 }
 function markDirty(){state.note=$('note').value;state.dirty=true;renderEditor()}
 function change(i,d){let x=state.lines[i];x.q+=d;if(x.q<=0)state.lines.splice(i,1);markDirty()}
@@ -185,7 +189,7 @@ async function save(){
  if(!state.selected||state.loading)return false;
  state.loading=true;$('save').disabled=true;
  try{
-  const payload=state.lines.map(x=>({n:x.n,p:x.p,q:x.q}));
+  const payload=state.lines.map(x=>({n:x.n,p:x.p,q:x.q,tariff:x.tariff||'normal'}));
   const {error}=await db.rpc('cafe_save_order',{p_table:state.selected,p_version:state.order?.version||0,p_items:payload,p_note:$('note').value});
   if(error)throw error;
   state.dirty=false;await readSelected();await refreshOrders();
@@ -627,6 +631,7 @@ state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',sc
 .on('postgres_changes',{event:'*',schema:'public',table:'order_items'},()=>refreshOrders())
 .subscribe();
 }
+$('tariff-normal').onclick=()=>{activeTariff='normal';renderEditor()};$('tariff-esnaf').onclick=()=>{activeTariff='esnaf';renderEditor()};
 $('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);
 $('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
 $('refresh').onclick=()=>loadTables();$('save').onclick=save;
