@@ -28,8 +28,8 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 <section id="workspace" class="hidden">
 <div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi (Yönetici)</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button></div></div>
 <div id="editor" class="panel hidden">
-<div class="row"><h2 id="table-title">Masa</h2><span id="revision" class="muted"></span></div>
-<p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Başka cihazdaki güncellemeler bunları otomatik değiştirmez.</p>
+<div class="row"><button id="back-table" class="alt">← Masalara Dön</button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
+<p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Hesap/taşıma işleminden önce bu değişiklikler kaydedilecek. Başka cihazdaki güncellemeler birbiri üzerine yazılmaz.</p>
 <h3>Ürün ekle</h3><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
 <div class="divider"></div><h3>Sipariş</h3><div id="lines"></div>
 <label>Not<textarea rows="2" id="note" placeholder="Sipariş notu"></textarea></label>
@@ -97,7 +97,7 @@ $('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><t
 document.querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.minus),-1));
 document.querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.plus),1));
 $('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)=>s+x.p*x.q,0));
-$('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=state.dirty||!state.order||!state.lines.length;
+$('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=state.loading||!state.lines.length;
 }
 function addProduct(n,p){let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()}
 function pickProduct(x){
@@ -110,19 +110,42 @@ function pickProduct(x){
 }
 function markDirty(){state.note=$('note').value;state.dirty=true;renderEditor()}
 function change(i,d){let x=state.lines[i];x.q+=d;if(x.q<=0)state.lines.splice(i,1);markDirty()}
-async function save(){if(!state.selected||state.loading)return;state.loading=true;$('save').disabled=true;
-try{let payload=state.lines.map(x=>({n:x.n,p:x.p,q:x.q})),{data,error}=await db.rpc('cafe_save_order',{p_table:state.selected,p_version:state.order?.version||0,p_items:payload,p_note:$('note').value});
-if(error)throw error;
-state.dirty=false;await readSelected();await refreshOrders();message('Sipariş kaydedildi. Diğer cihazlar da görebilir.');
-}catch(e){message('Kaydedilemedi: '+e.message+' · Başka cihaz değişiklik yaptıysa sayfayı yenileyin.',true)}finally{state.loading=false;$('save').disabled=false}}
-async function pay(method){if(!state.order||state.dirty||state.loading)return;
-const sum=state.lines.reduce((a,x)=>a+x.p*x.q,0);
-if(!confirm(state.selected+' · '+money(sum)+' · '+method+' ile hesap kapatılsın mı?'))return;
-state.loading=true;
-try{const lines=state.lines.map(x=>({id:x.id,q:x.q}));if(lines.some(x=>!x.id))throw Error('Önce siparişi kaydedin.');
-const key=crypto.randomUUID();const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:key});
-if(error)throw error;message('Ödeme kaydedildi. Hesap kapatıldı.');await readSelected();await refreshOrders();
-}catch(e){message('Ödeme kaydedilemedi: '+e.message,true)}finally{state.loading=false}}
+async function save(){
+ if(!state.selected||state.loading)return false;
+ state.loading=true;$('save').disabled=true;
+ try{
+  const payload=state.lines.map(x=>({n:x.n,p:x.p,q:x.q}));
+  const {error}=await db.rpc('cafe_save_order',{p_table:state.selected,p_version:state.order?.version||0,p_items:payload,p_note:$('note').value});
+  if(error)throw error;
+  state.dirty=false;await readSelected();await refreshOrders();
+  message('Sipariş kaydedildi. Diğer cihazlarda da görünür.');return true;
+ }catch(e){
+  message('Sipariş kaydedilemedi: '+e.message+' · Başka cihaz bu masayı değiştirdiyse yenileyin.',true);return false;
+ }finally{state.loading=false;$('save').disabled=false}
+}
+async function ensureSaved(){
+ if(!state.selected||state.loading)return false;
+ if(!state.lines.length){message('Bu masada işlem yapılacak ürün yok.',true);return false}
+ if(state.dirty||!state.order)return await save();
+ return true;
+}
+async function pay(method){
+ if(state.loading||!state.selected)return;
+ const sum=state.lines.reduce((a,x)=>a+x.p*x.q,0);
+ if(sum<=0){message('Masa boş; kapatılacak hesap yok.',true);return}
+ if(!confirm(state.selected+' · '+money(sum)+' · '+method+' ile hesap kapatılsın mı?\\nKaydedilmemiş ürünler önce kaydedilir.'))return;
+ if(!await ensureSaved())return;
+ state.loading=true;
+ try{
+  const lines=state.lines.map(x=>({id:x.id,q:x.q}));
+  if(lines.some(x=>!x.id))throw Error('Önce siparişi kaydedin.');
+  const key=crypto.randomUUID();
+  const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:key});
+  if(error)throw error;
+  message('Ödeme kaydedildi, hesap kapatıldı.');await readSelected();await refreshOrders();
+ }catch(e){message('Ödeme kaydedilemedi: '+e.message,true)}
+ finally{state.loading=false}
+}
 
 async function addCustom(){
  const name=prompt('Özel masa adı:');if(name===null)return;const n=name.trim();
@@ -130,20 +153,27 @@ async function addCustom(){
  if(error)message('Masa oluşturulamadı: '+error.message,true);else{message('Özel masa oluşturuldu: '+n);await loadTables();await openTable(n);}
 }
 async function transfer(){
- if(!state.order||state.dirty)return;
- const target=prompt('Hedef masa adını girin:\\n'+state.tables.filter(t=>t.id!==state.selected).map(t=>t.id).join(' · '));
- if(!target)return;
+ if(state.loading||!state.selected||!state.lines.length){message('Taşınacak ürün yok.',true);return}
+ const target=prompt('Hedef masa adını yazın:\\n'+state.tables.filter(t=>t.id!==state.selected).map(t=>t.id).join(' · '));
+ if(target===null)return;
  const dest=target.trim();
- if(!state.tables.some(t=>t.id===dest)||dest===state.selected){message('Geçerli bir hedef masa seçin.',true);return}
+ if(!state.tables.some(t=>t.id===dest)||dest===state.selected){message('Geçerli ve farklı bir hedef masa seçin.',true);return}
+ if(!confirm(state.selected+' → '+dest+'\\nMasa taşınacak veya hedef doluysa birleştirilecek. Kaydedilmemiş ürünler önce kaydedilir. Devam?'))return;
+ if(!await ensureSaved())return;
  const {data,error}=await db.from('orders').select('id,version').eq('table_id',dest).eq('status','open').maybeSingle();
- if(error){message(error.message,true);return}
- if(!confirm(state.selected+' → '+dest+'\\n'+(data?'Siparişler birleştirilecek.':'Sipariş taşınacak.')+' Devam edilsin mi?'))return;
- const out=await db.rpc('cafe_transfer_order',{p_from:state.selected,p_to:dest,p_from_version:state.order.version,p_to_version:data?.version||0});
- if(out.error){message('Taşıma yapılamadı: '+out.error.message,true);return}
- message('Masa '+(data?'birleştirildi':'taşındı')+'.');await loadTables();await openTable(dest);
+ if(error){message('Hedef masa okunamadı: '+error.message,true);return}
+ state.loading=true;
+ try{
+  const out=await db.rpc('cafe_transfer_order',{p_from:state.selected,p_to:dest,p_from_version:state.order.version,p_to_version:data?.version||0});
+  if(out.error)throw out.error;
+  message('Masa '+(data?'birleştirildi':'taşındı')+'.');
+  state.selected=null;show('editor',false);
+  await loadTables();await openTable(dest);
+ }catch(e){message('Taşıma/birleştirme yapılamadı: '+e.message,true)}
+ finally{state.loading=false}
 }
 async function split(){
- if(!state.order||state.dirty)return;
+ if(!await ensureSaved())return;
  const items=state.lines;
  if(items.some(x=>!x.id)){message('Önce siparişi kaydedin.',true);return}
  let units=[];
@@ -164,14 +194,14 @@ async function split(){
  wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=true;
  try{const {error}=await db.rpc('cafe_pay',{p_table:state.selected,p_version:state.order.version,p_method:method,p_lines:lines,p_key:crypto.randomUUID()});
  if(error)throw error;close();message('Parça ödeme kaydedildi: '+money(sum));await readSelected();await refreshOrders();}
- catch(e){message('Parça ödeme yapılamadı: '+e.message,true);wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=false}
+ catch(e){message('Parça ödeme yapılamadı: '+e.message,true);wrap.querySelector('#split-total').textContent='Hata: '+e.message;wrap.querySelector('#split-cash').disabled=wrap.querySelector('#split-card').disabled=false}
  };
  wrap.querySelector('#split-cash').onclick=()=>take('Nakit');
  wrap.querySelector('#split-card').onclick=()=>take('Kart');
 }
 async function report(){
  const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
- if(error){message('Rapor okunamadı: '+error.message,true);return}
+ if(error){$('summary-title').textContent='Gün Sonu · Hata';$('summary-body').textContent=error.message;show('summary',true);message('Rapor okunamadı: '+error.message,true);return}
  const sums={Nakit:0,Kart:0},products={};(data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount);(p.payment_items||[]).forEach(i=>{const key=i.product_name+' / '+i.unit_price;const q=products[key]||{n:i.product_name,p:Number(i.unit_price),q:0};q.q+=i.quantity;products[key]=q})});
  $('summary-title').textContent='Gün Sonu · Test';
  $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+Object.values(products).map(x=>'<p>'+esc(x.n)+' · '+x.q+' adet · '+money(x.p*x.q)+'</p>').join('')+'<p class="note">Günü kapatma / geçmişi silme bu testte kapalı; kayıtlar korunuyor.</p>';
@@ -211,7 +241,7 @@ async function staffAdmin(){
 async function audit(){
  if(state.role!=='manager')return;
  const {data,error}=await db.from('audit_events').select('event_type,table_id,details,created_at,actor_id').order('created_at',{ascending:false}).limit(100);
- if(error){message('İşlem geçmişine erişilemedi: '+error.message,true);return}
+ if(error){$('summary-title').textContent='İşlem Geçmişi · Hata';$('summary-body').textContent=error.message;show('summary',true);message('İşlem geçmişine erişilemedi: '+error.message,true);return}
  $('summary-title').textContent='İşlem Geçmişi · Yönetici';
  $('summary-body').innerHTML=(data||[]).map(x=>'<div class="divider"></div><p>'+esc(new Date(x.created_at).toLocaleString('tr-TR'))+' · '+esc(x.table_id||'Sistem')+' · '+esc(x.event_type)+'</p><small>'+esc(JSON.stringify(x.details))+'</small>').join('')||'<p>Henüz kayıt yok.</p>';
  show('summary',true);
@@ -224,10 +254,11 @@ state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',sc
 $('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);
 $('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
 $('refresh').onclick=()=>loadTables();$('save').onclick=save;
+$('back-table').onclick=async()=>{if(state.dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçilsin mi?'))return;state.selected=null;state.dirty=false;show('editor',false);await refreshOrders();window.scrollTo(0,0)};
 $('custom').onclick=addCustom;$('transfer').onclick=transfer;$('split').onclick=split;
 $('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;$('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
-$('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);$('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=true;});
+$('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);});
 db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
