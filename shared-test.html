@@ -21,6 +21,7 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 .option-overlay{position:fixed;inset:0;background:#000b;z-index:2600;display:flex;align-items:flex-end;justify-content:center;padding:12px}
 .option-sheet{background:#292923;border:1px solid #626258;border-radius:18px 18px 14px 14px;padding:20px;width:100%;max-width:540px;max-height:85dvh;overflow-y:auto}
 .option-sheet h3{margin:0 0 14px}.option-choices{display:grid;gap:10px}.option-choices button{width:100%;text-align:left;background:#3d4038;color:#f8f6ea;padding:16px}.option-choices button:hover{background:#4c594e}.option-choices .cancel{background:#282821;border:1px solid #65655a;text-align:center}
+.manager-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:14px 0}.manager-tabs button{padding:12px 5px;font-size:13px}.manager-tabs .active{background:#a8d4af;color:#17221b}.manager-date-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.manager-date-row label{min-width:0;font-size:13px;color:#d5d4c8}.manager-date-row input,.manager-date-row select{font-size:14px;max-width:100%;margin:4px 0 10px}.manager-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}.manager-stat{background:#34372e;border-radius:12px;padding:15px}.manager-stat b{display:block;margin-top:7px;font-size:19px}.manager-record{padding:12px 2px;border-bottom:1px solid #484840}.manager-record-title{font-weight:700}.manager-record-info{font-size:13px;color:#cacac0;margin-top:4px}.manager-exports{margin-top:18px}.manager-record .log-detail{margin:8px 0}.manager-days{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.manager-days button{font-size:12px}.manager-muted{color:#bab9ad;font-size:13px}.manager-table{width:100%;font-size:13px}.manager-table td,.manager-table th{padding:9px 4px;border-bottom:1px solid #45453e;text-align:left}.manager-table th:last-child,.manager-table td:last-child{text-align:right}@media print{header,#msg,#workspace,#manager-back,.manager-tabs,#manager-date-tools,#manager-log-filters,#manager-exports,#manager-feedback,.manager-days{display:none!important}#manager-screen{display:block!important}main{max-width:none;padding:0}body{background:white!important;color:black!important}.panel{border:0;background:white;color:black}.manager-stat{background:#eee;color:#111}.manager-record-info,.manager-muted{color:#444}.manager-record{break-inside:avoid}}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -33,7 +34,7 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 <p class="note">Yeni kayıtlar otomatik olarak onay bekleyen Kullanıcı hesabı oluşturur. Yönetici onaylayana kadar masalara erişilemez. Şifrenizi kimseyle paylaşmayın. Şimdilik e-posta/şifre kullanılır.</p>
 </section>
 <section id="workspace" class="hidden">
-<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi (Yönetici)</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button></div></div>
+<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi (Yönetici)</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button><button id="manager-dashboard" class="alt hidden">Yönetici Paneli</button></div></div>
 <div id="editor" class="panel hidden">
 <div class="row"><button id="back-table" class="alt">← Masalara Dön</button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Hesap/taşıma işleminden önce bu değişiklikler kaydedilecek. Başka cihazdaki güncellemeler birbiri üzerine yazılmaz.</p>
@@ -46,6 +47,35 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 <p class="note">Ödeme ve masa taşıma öncesinde siparişi kaydedin. Aynı masada eşzamanlı değişiklik olursa eski sürümle işlem engellenir.</p>
 </div>
 <section id="summary" class="panel hidden"><div class="row"><h2 id="summary-title">Gün Sonu</h2><button class="alt" id="summary-close">Kapat</button></div><div id="summary-body"></div></section>
+</section>
+<section id="manager-screen" class="hidden">
+ <div class="panel">
+  <div class="row"><button id="manager-back" class="alt">← Masalara Dön</button><h2>Yönetici Paneli</h2></div>
+  <p class="note">Sam's Coffee · Geçmiş raporlar ve kayıt arşivi</p>
+  <div class="manager-tabs">
+   <button class="alt" data-manager-tab="reports">Günlük Raporlar</button>
+   <button class="alt" data-manager-tab="logs">İşlem Geçmişi</button>
+   <button class="alt" data-manager-tab="analysis">Satış Analizi</button>
+   <button class="alt" data-manager-tab="users">Kullanıcı Yönetimi</button>
+  </div>
+  <div id="manager-date-tools">
+   <div class="manager-date-row">
+    <label>Başlangıç <input id="manager-from" type="date"></label>
+    <label>Bitiş <input id="manager-to" type="date"></label>
+   </div>
+   <div class="row"><button id="manager-today" class="alt">Bugün</button><button id="manager-week" class="alt">Son 7 Gün</button><button id="manager-month" class="alt">Bu Ay</button><button id="manager-load">Göster</button></div>
+  </div>
+  <div id="manager-log-filters" class="hidden manager-date-row">
+   <label>Çalışan <select id="manager-person"><option value="">Tüm çalışanlar</option></select></label>
+   <label>Masa <select id="manager-table"><option value="">Tüm masalar</option></select></label>
+  </div>
+  <div id="manager-feedback" class="note" role="status"></div>
+  <div id="manager-content"></div>
+  <div class="row manager-exports" id="manager-exports">
+   <button id="manager-export" class="alt">Excel (CSV) İndir</button>
+   <button id="manager-print" class="alt">Yazdır / PDF</button>
+  </div>
+ </div>
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -62,7 +92,7 @@ function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
 if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user)await loadTables();else{show('workspace',false);message('Lütfen personel hesabınızla giriş yapın.')}}
+async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user)await loadTables();else{show('workspace',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
 async function login(signUp){let email=$('email').value.trim(),password=$('password').value;
 if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
 const displayName=$('display-name').value.trim();if(signUp&&!displayName){message('Yeni kayıt için adınızı yazın.',true);return}const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName}}}):await db.auth.signInWithPassword({email,password});
@@ -76,7 +106,7 @@ if(!profile||!profile.active){show('workspace',false);show('auth',false);message
 const {data,error}=await db.from('cafe_tables').select('id,is_custom').eq('archived',false).order('id');
 if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
 if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
-state.tables=data;state.role=profile.role;show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
+state.tables=data;state.role=profile.role;show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 await refreshOrders();subscribe();
 }
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity)').eq('status','open');
@@ -347,6 +377,182 @@ async function audit(){
   return dateHeading+'<div class="log-entry"><div class="log-head"><span class="log-table">'+esc(x.table_id||'Sistem')+'</span><span class="log-type">'+esc(x.view.label)+'</span></div><div class="log-detail">'+esc(x.view.body)+'</div>'+ (x.view.total!==null?'<div class="log-total">Toplam: '+money(x.view.total)+'</div>':'')+'<div class="log-meta">'+esc(t)+' · '+esc(people.get(x.actor_id)||'Bilinmeyen çalışan')+'</div></div>';
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
+
+const manager={tab:'reports',payments:[],events:[],users:[],filters:{},exportRows:[],exportName:'rapor'};
+const istDate=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+const dateAt=(str)=>new Date(str+'T00:00:00+03:00');
+const dateLabel=(str)=>new Date(str+'T12:00:00+03:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
+const isoDay=(d)=>new Date(d.getTime()+86400000).toISOString();
+function managerFeedback(text,isError=false){$('manager-feedback').textContent=text;$('manager-feedback').style.color=isError?'#ffb4a8':'#d8dac7'}
+function managerTab(tab){
+ if(state.role!=='manager')return;
+ manager.tab=tab;
+ document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
+ show('manager-date-tools',tab!=='users');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users');
+ $('manager-content').innerHTML='';
+ if(tab==='users')return managerUsers();
+ managerLoad();
+}
+function managerOpen(tab='reports'){
+ if(state.role!=='manager'){message('Yönetici yetkisi gerekiyor.',true);return}
+ if(state.dirty&&!confirm('Masadaki kaydedilmemiş değişiklikler kaybolmadan önce kaydedilmeli. Yönetici paneline geçilsin mi?'))return;
+ show('workspace',false);show('editor',false);show('summary',false);show('manager-screen',true);
+ managerFeedback('');managerTab(tab);window.scrollTo(0,0);
+}
+function managerBack(){
+ show('manager-screen',false);show('workspace',true);if(state.selected)show('editor',true);window.scrollTo(0,0);
+}
+function managerSetRange(mode){
+ const today=istDate(),now=dateAt(today);let from=today;
+ if(mode==='week'){const d=new Date(now.getTime()-6*86400000);from=istDate(d)}
+ if(mode==='month')from=today.slice(0,8)+'01';
+ $('manager-from').value=from;$('manager-to').value=today;
+ managerLoad();
+}
+async function managerPageAll(table,fields,from,to,limit=10000){
+ const out=[];let offset=0;
+ for(;;){
+  let query=db.from(table).select(fields).gte('created_at',from).lt('created_at',to).order('created_at',{ascending:true}).range(offset,offset+499);
+  const {data,error}=await query;
+  if(error)throw error;
+  out.push(...(data||[]));
+  if(!data||data.length<500)break;
+  offset+=500;
+  if(offset>=limit)throw Error('Çok fazla kayıt bulundu. Tarih aralığını daraltın (en fazla '+limit+' kayıt).');
+ }
+ return out;
+}
+async function managerLoad(){
+ if(state.role!=='manager'||manager.tab==='users')return;
+ const from=$('manager-from').value,to=$('manager-to').value;
+ if(!from||!to||from>to){managerFeedback('Geçerli bir başlangıç ve bitiş tarihi seçin.',true);return}
+ const days=(dateAt(to).getTime()-dateAt(from).getTime())/86400000;
+ if(days>366){managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
+ managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
+ try{
+  const fromUTC=dateAt(from).toISOString(),toUTC=isoDay(dateAt(to));
+  const needPayment=manager.tab!=='logs',needLogs=manager.tab==='logs';
+  const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
+  if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity)',fromUTC,toUTC));
+  if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
+  const results=await Promise.all(requested);
+  if(results[0].error)throw results[0].error;
+  manager.users=results[0].data||[];
+  if(needPayment)manager.payments=results[1];
+  if(needLogs)manager.events=results[1];
+  manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
+  if(manager.tab==='reports')managerRenderReports();
+  if(manager.tab==='analysis')managerRenderAnalysis();
+  if(manager.tab==='logs')managerRenderLogs();
+ }catch(err){$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
+ finally{$('manager-load').disabled=false}
+}
+function managerOverview(payments){
+ const total=payments.reduce((s,p)=>s+Number(p.amount||0),0);
+ const cash=payments.filter(p=>p.payment_method==='Nakit').reduce((s,p)=>s+Number(p.amount||0),0);
+ const card=payments.filter(p=>p.payment_method==='Kart').reduce((s,p)=>s+Number(p.amount||0),0);
+ return '<div class="manager-stats">'+[['Toplam Tahsilat',money(total)],['Nakit',money(cash)],['Kart',money(card)],['Ödeme İşlemi',String(payments.length)]].map(x=>'<div class="manager-stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
+}
+function managerRenderReports(){
+ const rows=manager.payments,groups=new Map();
+ rows.forEach(p=>{const day=istDate(new Date(p.created_at));if(!groups.has(day))groups.set(day,{total:0,cash:0,card:0,count:0});
+ const x=groups.get(day),amount=Number(p.amount||0);x.total+=amount;x.count++;
+ if(p.payment_method==='Nakit')x.cash+=amount;else if(p.payment_method==='Kart')x.card+=amount;});
+ const items=[...groups].sort((a,b)=>b[0].localeCompare(a[0]));
+ let selected=manager.selectedDay;if(!groups.has(selected))selected='';
+ manager.exportName='sams_gunluk_rapor';manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,v])=>[d,v.total,v.cash,v.card,v.count])];
+ $('manager-content').innerHTML=managerOverview(rows)+'<h3>Günlük satış arşivi</h3>'+
+ (items.length?'<div class="manager-days">'+items.map(([day,x])=>'<button class="alt" data-report-day="'+esc(day)+'">'+esc(dateLabel(day))+' · '+money(x.total)+'</button>').join('')+'</div>':'<p class="note">Bu tarihlerde ödeme kaydı yok.</p>')+
+ '<div id="manager-day-detail"></div><p class="note">Raporlar ödeme kayıtlarından hesaplanır. Tarih değiştirince geçmiş günler yeniden görüntülenebilir. Bu işlem kayıtları kapatmaz veya silmez.</p>';
+ document.querySelectorAll('[data-report-day]').forEach(b=>b.onclick=()=>managerDayDetail(b.dataset.reportDay));
+ if(selected)managerDayDetail(selected);
+}
+function managerDayDetail(day){
+ const payments=manager.payments.filter(p=>istDate(new Date(p.created_at))===day);
+ manager.selectedDay=day;
+ const totals=new Map();
+ payments.forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ const x=totals.get(key)||{name:i.product_name,q:0,amount:0};x.q+=Number(i.quantity);x.amount+=Number(i.unit_price)*Number(i.quantity);totals.set(key,x)}));
+ const items=[...totals.values()].sort((a,b)=>b.q-a.q);
+ $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+managerOverview(payments)+'<h4>Satılan ürünler</h4>'+
+ (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>').join('')+'</tbody></table>':'<p>Ürün kaydı yok.</p>');
+ manager.exportName='sams_gunluk_'+day;
+ manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),x.payment_method,x.amount])];
+}
+function managerRenderAnalysis(){
+ const products=new Map();
+ manager.payments.forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ const o=products.get(key)||{name:i.product_name,q:0,amount:0};o.q+=Number(i.quantity);o.amount+=Number(i.unit_price)*Number(i.quantity);products.set(key,o)}));
+ const items=[...products.values()].sort((a,b)=>b.amount-a.amount);
+ manager.exportName='sams_satis_analizi';
+ manager.exportRows=[['Ürün','Satılan Adet','Ciro (TL)'],...items.map(x=>[x.name,x.q,x.amount])];
+ $('manager-content').innerHTML=managerOverview(manager.payments)+'<h3>Ürün satış analizi</h3>'+
+ (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.q+'</td><td>'+money(x.amount)+'</td></tr>').join('')+'</tbody></table>':'<p class="note">Bu aralıkta satılan ürün yok.</p>');
+}
+function managerRenderLogs(){
+ const people=new Map(manager.users.map(x=>[x.user_id,x.display_name]));
+ const tables=[...new Set(manager.events.map(x=>x.table_id).filter(Boolean))].sort();
+ const person=$('manager-person'),table=$('manager-table');
+ const previousPerson=person.value,previousTable=table.value;
+ person.innerHTML='<option value="">Tüm çalışanlar</option>'+manager.users.map(x=>'<option value="'+esc(x.user_id)+'">'+esc(x.display_name)+'</option>').join('');
+ table.innerHTML='<option value="">Tüm masalar</option>'+tables.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('');
+ person.value=previousPerson;table.value=previousTable;
+ const draw=()=>{
+  const selected=manager.events.filter(x=>(!person.value||x.actor_id===person.value)&&(!table.value||x.table_id===table.value));
+  const chronological=[...manager.events].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const previousByTable=new Map(),descriptions=new Map();
+  chronological.forEach(x=>{
+   descriptions.set(x.id,auditSummary(x,previousByTable.get(x.table_id)));
+   if(x.event_type==='order_saved'&&Array.isArray(x.details?.items))previousByTable.set(x.table_id,x.details.items);
+   if(['payment','table_moved','table_merged'].includes(x.event_type))previousByTable.delete(x.table_id);
+  });
+  manager.exportName='sams_islem_gecmisi';
+  manager.exportRows=[['Tarih/Saat','Masa','İşlem','Açıklama','Çalışan'],...selected.map(x=>{
+   const v=descriptions.get(x.id);return[new Date(x.created_at).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'}),x.table_id||'Sistem',v.label,v.body,people.get(x.actor_id)||'Bilinmeyen çalışan'];
+  })];
+  $('manager-content').innerHTML='<h3>İşlem arşivi · '+selected.length+' kayıt</h3>'+
+  [...selected].reverse().map(x=>{const v=descriptions.get(x.id),time=new Date(x.created_at).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'});
+   return '<div class="manager-record"><div class="row"><span class="manager-record-title">'+esc(x.table_id||'Sistem')+'</span><span class="log-type">'+esc(v.label)+'</span></div><div class="log-detail">'+esc(v.body)+'</div><div class="manager-record-info">'+esc(time)+' · '+esc(people.get(x.actor_id)||'Bilinmeyen çalışan')+'</div></div>';
+  }).join('')||'<p class="note">Bu filtrelerde işlem kaydı yok.</p>';
+ };
+ person.onchange=draw;table.onchange=draw;draw();
+}
+async function managerUsers(){
+ if(state.role!=='manager')return;
+ managerFeedback('Kullanıcılar yükleniyor…');
+ const {data,error}=await db.from('staff_accounts').select('user_id,display_name,role,active,created_at').order('created_at',{ascending:true});
+ if(error){managerFeedback('Kullanıcılar yüklenemedi: '+error.message,true);return}
+ managerFeedback('Üyelik onayları ve yetkileri sadece yöneticiler değiştirebilir.');
+ manager.users=data||[];
+ const rows=manager.users;
+ $('manager-content').innerHTML='<h3>Çalışan hesapları</h3><p class="note">Onay bekleyenleri önce Kullanıcı olarak onaylayabilir, sonra Yönetici yapabilirsiniz.</p>'+
+ rows.map((x,i)=>{
+ const role=x.active?(x.role==='manager'?'Yönetici':'Kullanıcı'):'Onay bekliyor';
+ const own=x.user_id===state.user.id;
+ const actions=own?'<span class="manager-muted">Bu sizin hesabınız</span>':
+ !x.active?'<button class="alt" data-m-action="approve" data-m-index="'+i+'">Kullanıcı olarak onayla</button>':
+ x.role==='manager'?'<button class="alt" data-m-action="demote" data-m-index="'+i+'">Kullanıcı yap</button><button class="alt" data-m-action="deactivate" data-m-index="'+i+'">Devre dışı bırak</button>':
+ '<button class="alt" data-m-action="promote" data-m-index="'+i+'">Yönetici yap</button><button class="alt" data-m-action="deactivate" data-m-index="'+i+'">Devre dışı bırak</button>';
+ return '<div class="manager-record"><div class="manager-record-title">'+esc(x.display_name)+'</div><div class="manager-record-info">'+role+'</div><div class="row" style="justify-content:start;margin-top:10px">'+actions+'</div></div>';
+ }).join('');
+ document.querySelectorAll('[data-m-action]').forEach(btn=>btn.onclick=async()=>{
+  const x=rows[Number(btn.dataset.mIndex)],action=btn.dataset.mAction;
+  if(!x||!confirm(x.display_name+' · '+({approve:'Kullanıcı olarak onayla',promote:'Yönetici yap',demote:'Kullanıcı yap',deactivate:'Devre dışı bırak'}[action])+'?'))return;
+  btn.disabled=true;const {error}=await db.rpc('manager_set_staff',{p_user_id:x.user_id,p_action:action});
+  if(error){managerFeedback('Yetki güncellenemedi: '+error.message,true);btn.disabled=false;return}
+  await managerUsers();
+ });
+}
+function managerCSV(){
+ if(state.role!=='manager'||!manager.exportRows.length)return;
+ const csv='\ufeff'+manager.exportRows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const link=document.createElement('a'),url=URL.createObjectURL(blob);
+ link.href=url;link.download=manager.exportName+'_'+manager.filters.from+'_'+manager.filters.to+'.csv';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 function subscribe(){if(state.channel)db.removeChannel(state.channel);
 state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',schema:'public',table:'orders'},()=>refreshOrders())
 .on('postgres_changes',{event:'*',schema:'public',table:'order_items'},()=>refreshOrders())
@@ -357,10 +563,15 @@ $('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.
 $('refresh').onclick=()=>loadTables();$('save').onclick=save;
 $('back-table').onclick=async()=>{if(state.dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçilsin mi?'))return;state.selected=null;state.dirty=false;show('editor',false);await refreshOrders();window.scrollTo(0,0)};
 $('custom').onclick=addCustom;$('transfer').onclick=transfer;$('split').onclick=split;
-$('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;$('summary-close').onclick=()=>show('summary',false);
+$('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;
+$('manager-dashboard').onclick=()=>managerOpen('reports');$('manager-back').onclick=managerBack;
+document.querySelectorAll('[data-manager-tab]').forEach(b=>b.onclick=()=>managerTab(b.dataset.managerTab));
+$('manager-load').onclick=managerLoad;$('manager-today').onclick=()=>managerSetRange('today');$('manager-week').onclick=()=>managerSetRange('week');$('manager-month').onclick=()=>managerSetRange('month');
+$('manager-export').onclick=managerCSV;$('manager-print').onclick=()=>window.print();
+$('manager-from').value=$('manager-to').value=istDate();$('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
 $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);});
-db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false)}});
+db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false);show('manager-screen',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
 </script></body></html>
