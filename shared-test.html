@@ -547,10 +547,10 @@ function managerCSV(){
  if(state.role!=='manager'||!manager.exportRows.length)return;
  const csv='\ufeff'+manager.exportRows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
- const link=document.createElement('a'),url=URL.createObjectURL(blob);
+ const link=document.createElement('a'),url=window.URL.createObjectURL(blob);
  link.href=url;link.download=manager.exportName+'_'+manager.filters.from+'_'+manager.filters.to+'.csv';
  document.body.appendChild(link);link.click();link.remove();
- setTimeout(()=>URL.revokeObjectURL(url),1000);
+ setTimeout(()=>window.URL.revokeObjectURL(url),1000);
 }
 
 function subscribe(){if(state.channel)db.removeChannel(state.channel);
