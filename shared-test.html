@@ -131,6 +131,7 @@ show('dirty-notice',state.dirty);
  $('tariff-normal').className=activeTariff==='normal'?'':'alt';$('tariff-esnaf').className=activeTariff==='esnaf'?'':'alt';
 $('categories').innerHTML=[...new Set(menuCatalog.filter(x=>x.active).map(x=>x.category))].map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
 document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=[...new Set(menuCatalog.filter(x=>x.active).map(x=>x.category))][Number(b.dataset.category)];renderEditor()});
+if(!menuCatalog.some(x=>x.category===category&&x.active))category=menuCatalog.find(x=>x.active)?.category||category;
 const list=menuCatalog.filter(x=>x.category===category&&x.active).map(x=>({c:x.category,n:x.name,p:Number(x.normal_price),b:x.kind==='bowl'?'dynamic':null,ch:x.kind==='options',menu:x}));
 $('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'">'+esc(x.n)+' · '+(x.b?'Seçenekler':money(activeTariff==='esnaf'?(esnafPrices[x.n]??x.p):x.p))+'</button>').join('');
 document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>pickProduct(list[Number(b.dataset.product)]));
@@ -395,7 +396,7 @@ function managerTab(tab){
  if(state.role!=='manager')return;
  manager.tab=tab;
  document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
- show('manager-date-tools',tab!=='users'&&tab!=='overview'&&tab!=='menu'&&tab!=='menu'&&tab!=='menu');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview');
+ show('manager-date-tools',tab!=='users'&&tab!=='overview'&&tab!=='menu');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview'&&tab!=='menu');
  $('manager-content').innerHTML='';
  if(tab==='users')return managerUsers();
  if(tab==='menu')return managerMenu();
