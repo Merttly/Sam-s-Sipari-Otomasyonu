@@ -56,7 +56,7 @@ body:has(#editor:not(.hidden)){overflow:hidden}
    <button class="alt" data-manager-tab="overview">Genel Bakış</button><button class="alt" data-manager-tab="reports">Günlük Raporlar</button>
    <button class="alt" data-manager-tab="logs">İşlem Geçmişi</button>
    <button class="alt" data-manager-tab="analysis">Satış Analizi</button><button class="alt" data-manager-tab="performance">Kullanıcı Performansı</button><button class="alt" data-manager-tab="corrections">Ödeme Düzeltmeleri</button>
-   <button class="alt" data-manager-tab="users">Kullanıcı Yönetimi</button>
+   <button class="alt" data-manager-tab="users">Kullanıcı Yönetimi</button><button class="alt" data-manager-tab="menu">Menü Yönetimi</button>
   </div>
   <div id="manager-date-tools">
    <div class="manager-date-row">
@@ -89,12 +89,13 @@ const M=[...["Marry Me Bowl","Hot Honey Bowl","General Bowl","Honey Mustard Bowl
 const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];let category='Bowls';let activeTariff='normal';
 const esnafPrices={'Sünepe':140,'Kasap':180,'Kavkas':180,'Baba':240,'Baba Yanar':240,'Kasap Yanar':180,'Beyaz Yaka':250,'Americano':125,'Caffe Latte':125,'Aromalı Caffe Latte':125,'Sam\'s Mocktail':150,'Blush':150,'Baba Yanar Mocktail':200,'Yakamoz':150,'Narenciye':150,'Çay':20,'Su':15,'Soda':40,'Limonata':100,'Churchill':80,'Meşrubat':80,'Burn':80};
 const bowlEsnaf=(name,protein)=>({Bonfileli:name==='Fit Bowl'?330:350,Tiftikli:name==='Fit Bowl'?350:370,Köfteli:240,Tavuklu:220})[protein];
+let menuCatalog=[];
 const state={user:null,role:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
 function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
 if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user)await loadTables();else{show('workspace',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
+async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
 async function login(signUp){let email=$('email').value.trim(),password=$('password').value;
 if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
 const displayName=$('display-name').value.trim();if(signUp&&!displayName){message('Yeni kayıt için adınızı yazın.',true);return}const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName}}}):await db.auth.signInWithPassword({email,password});
@@ -128,9 +129,9 @@ function renderEditor(){show('editor',!!state.selected);if(!state.selected)retur
 $('table-title').textContent=state.selected;$('revision').textContent='Sürüm '+(state.order?.version||0);
 show('dirty-notice',state.dirty);
  $('tariff-normal').className=activeTariff==='normal'?'':'alt';$('tariff-esnaf').className=activeTariff==='esnaf'?'':'alt';
-$('categories').innerHTML=categories.map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
-document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=categories[Number(b.dataset.category)];renderEditor()});
-const list=M.filter(x=>x.c===category);
+$('categories').innerHTML=[...new Set(menuCatalog.filter(x=>x.active).map(x=>x.category))].map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
+document.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{category=[...new Set(menuCatalog.filter(x=>x.active).map(x=>x.category))][Number(b.dataset.category)];renderEditor()});
+const list=menuCatalog.filter(x=>x.category===category&&x.active).map(x=>({c:x.category,n:x.name,p:Number(x.normal_price),b:x.kind==='bowl'?'dynamic':null,ch:x.kind==='options',menu:x}));
 $('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'">'+esc(x.n)+' · '+(x.b?'Seçenekler':money(activeTariff==='esnaf'?(esnafPrices[x.n]??x.p):x.p))+'</button>').join('');
 document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>pickProduct(list[Number(b.dataset.product)]));
 $('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+(x.tariff==='esnaf'?' · Esnaf':'')+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
@@ -161,26 +162,13 @@ function showOptions(title, options){
  document.body.appendChild(overlay);
 }
 function pickProduct(x){
- const base=activeTariff==='esnaf'?(x.c==='Mocktail'&&x.n==='Baba Yanar'?200:(esnafPrices[x.n]??x.p)):x.p;
- if(x.b){
-  const options=x.b==='f'
-   ? {Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}
-   : {Bonfileli:350,Tiftikli:370,Köfteli:280,Tavuklu:260};
-  showOptions(x.n,Object.entries(options).map(([name,price])=>({
-   label:name,price,onSelect:()=>addProduct(x.n+' · '+name,activeTariff==='esnaf'?bowlEsnaf(x.n,name):price)
-  })));
- }else if(x.ch){
-  showOptions(x.n,[
-   {label:'Normal',price:base,onSelect:()=>addProduct(x.n,base)},
-   {label:'Cheddar +40',price:base+40,onSelect:()=>addProduct(x.n+' · Cheddar',base+40)}
-  ]);
- }else if(x.c==='Tatlı'){
-  showOptions(x.n,[
-   {label:'Normal',price:base,onSelect:()=>addProduct(x.n,base)},
-   {label:'Extra Dondurma +60 TL',price:x.p+60,onSelect:()=>addProduct(x.n+' · Extra Dondurma',x.p+60)},
-   {label:'Extra Çikolata Sosu +100 TL',price:x.p+100,onSelect:()=>addProduct(x.n+' · Extra Çikolata Sosu',x.p+100)},
-   {label:'İkisi Birlikte +160 TL',price:x.p+160,onSelect:()=>addProduct(x.n+' · Extra Dondurma + Extra Çikolata Sosu',x.p+160)}
-  ]);
+ const base=activeTariff==='esnaf'&&x.menu.esnaf_price!==null?Number(x.menu.esnaf_price):x.p;
+ if(x.menu.kind==='bowl'){
+  showOptions(x.n,(x.menu.options||[]).map(o=>({label:o.name,price:activeTariff==='esnaf'&&o.esnaf!=null?Number(o.esnaf):Number(o.normal),onSelect:()=>addProduct(x.n+' · '+o.name,activeTariff==='esnaf'&&o.esnaf!=null?Number(o.esnaf):Number(o.normal))})));
+ }else if(x.menu.kind==='options'){
+  const choices=[{label:'Normal',price:base,onSelect:()=>addProduct(x.n,base)}];
+  (x.menu.options||[]).forEach(o=>{const extra=activeTariff==='esnaf'&&o.esnaf!=null?Number(o.esnaf):Number(o.normal);choices.push({label:o.name,price:base+extra,onSelect:()=>addProduct(x.n+' · '+o.name,base+extra)})});
+  showOptions(x.n,choices);
  }else addProduct(x.n,base);
 }
 function markDirty(){state.note=$('note').value;state.dirty=true;renderEditor()}
@@ -407,9 +395,10 @@ function managerTab(tab){
  if(state.role!=='manager')return;
  manager.tab=tab;
  document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
- show('manager-date-tools',tab!=='users'&&tab!=='overview');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview');
+ show('manager-date-tools',tab!=='users'&&tab!=='overview'&&tab!=='menu'&&tab!=='menu'&&tab!=='menu');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview');
  $('manager-content').innerHTML='';
  if(tab==='users')return managerUsers();
+ if(tab==='menu')return managerMenu();
  managerLoad();
 }
 function managerOpen(tab='overview'){
@@ -595,6 +584,52 @@ function managerRenderLogs(){
   }).join('')||'<p class="note">Bu filtrelerde işlem kaydı yok.</p>';
  };
  person.onchange=draw;table.onchange=draw;draw();
+}
+async function loadMenu(){
+ const {data,error}=await db.from('menu_products').select('id,category,name,normal_price,esnaf_price,kind,options,active').order('id');
+ if(error){message('Menü yüklenemedi: '+error.message,true);return false}
+ menuCatalog=data||[];return true;
+}
+function managerMenu(){
+ if(state.role!=='manager')return;
+ $('manager-content').innerHTML='<h3>Menü Yönetimi</h3><p class="note">Ürün ve seçenek fiyatlarını buradan düzenleyebilirsiniz. Mevcut açık hesapların fiyatları değişmez. Ürün silinmez; pasife alınabilir.</p>'+
+ '<button id="menu-new">+ Yeni Ürün</button>'+
+ menuCatalog.map(x=>'<div class="manager-record"><div class="row"><span>'+esc(x.category)+' · '+esc(x.name)+' '+(!x.active?'(Pasif)':'')+'</span><button class="alt" data-menu-id="'+x.id+'">Düzenle</button></div><div class="manager-record-info">Normal '+money(x.normal_price)+' · Esnaf '+(x.esnaf_price===null?'Normal fiyat':money(x.esnaf_price))+'</div></div>').join('');
+ $('menu-new').onclick=()=>managerEditMenu(null);
+ document.querySelectorAll('[data-menu-id]').forEach(b=>b.onclick=()=>managerEditMenu(menuCatalog.find(x=>x.id===Number(b.dataset.menuId))));
+}
+function managerEditMenu(item){
+ if(state.role!=='manager')return;
+ const x=item||{id:null,category:'Kahve',name:'',normal_price:0,esnaf_price:null,kind:'plain',options:[],active:true};
+ const panel=$('manager-content');
+ panel.innerHTML='<button class="alt" id="menu-back">← Menü listesi</button><h3>'+(item?'Ürün Düzenle':'Yeni Ürün')+'</h3>'+
+ '<label>Kategori<input id="menu-cat" maxlength="50" value="'+esc(x.category)+'"></label>'+
+ '<label>Ürün adı<input id="menu-name" maxlength="120" value="'+esc(x.name)+'"></label>'+
+ '<label>Normal fiyat (TL)<input id="menu-normal" type="number" min="0" step=".01" value="'+x.normal_price+'"></label>'+
+ '<label>Esnaf fiyatı (boşsa normal fiyat)<input id="menu-esnaf" type="number" min="0" step=".01" value="'+(x.esnaf_price??'')+'"></label>'+
+ '<label>Seçenek türü<select id="menu-kind"><option value="plain">Seçeneksiz</option><option value="options">Ekstralar / alt seçenekler</option><option value="bowl">Bowl seçenekleri</option></select></label>'+
+ '<label>Seçenekler (her satır: Ad;Normal fiyat;Esnaf fiyatı — esnaf boşsa normal)<textarea id="menu-options" rows="7"></textarea></label>'+
+ '<label><input id="menu-active" type="checkbox" style="width:auto" '+(x.active?'checked':'')+'> Satışta aktif</label>'+
+ '<button id="menu-save">Değişiklikleri Kaydet</button><p class="note" id="menu-status"></p>';
+ $('menu-kind').value=x.kind;
+ $('menu-options').value=(x.options||[]).map(o=>[o.name,o.normal,o.esnaf??''].join(';')).join('\n');
+ $('menu-back').onclick=managerMenu;
+ $('menu-save').onclick=async()=>{
+  try{
+   const options=$('menu-options').value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
+    const parts=line.split(';').map(v=>v.trim());
+    if(parts.length!==3||!parts[0]||parts[1]===''||!Number.isFinite(Number(parts[1]))||parts[2]!==''&&!Number.isFinite(Number(parts[2])))throw Error('Seçenekler Ad;Normal;Esnaf biçiminde olmalı');
+    return {name:parts[0],normal:Number(parts[1]),esnaf:parts[2]===''?null:Number(parts[2])};
+   });
+   const name=$('menu-name').value.trim(),category=$('menu-cat').value.trim(),n=$('menu-normal').value,e=$('menu-esnaf').value;
+   if(!name||!category||n===''||!Number.isFinite(Number(n))||e!==''&&!Number.isFinite(Number(e)))throw Error('Ürün adı ve fiyatları kontrol edin');
+   $('menu-save').disabled=true;
+   const {error}=await db.rpc('manager_save_menu',{p_id:x.id,p_category:category,p_name:name,p_normal:Number(n),p_esnaf:e===''?null:Number(e),p_kind:$('menu-kind').value,p_options:options,p_active:$('menu-active').checked});
+   if(error)throw error;
+   if(!await loadMenu())throw Error('Yeni menü okunamadı');
+   managerMenu();message('Menü güncellendi.');renderEditor();
+  }catch(err){$('menu-status').textContent='Kaydedilemedi: '+err.message;$('menu-save').disabled=false}
+ };
 }
 async function managerUsers(){
  if(state.role!=='manager')return;
