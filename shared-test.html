@@ -27,11 +27,21 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 <main>
 <div id="msg" class="status">Bağlanılıyor...</div>
 <section id="auth" class="panel hidden">
-<h2>Personel girişi</h2><label>Adınız (yeni kayıt için)<input id="display-name" autocomplete="name" maxlength="80" placeholder="Adınız"></label>
+<div id="auth-login">
+<h2>Personel girişi</h2>
 <label>E-posta<input id="email" type="email" autocomplete="username" placeholder="ornek@eposta.com"></label>
-<label>Şifre<input id="password" type="password" autocomplete="current-password" placeholder="En az 8 karakter"></label>
-<div class="row"><button id="signin">Giriş yap</button><button id="signup" class="alt">Yeni hesap oluştur</button></div>
-<p class="note">Yeni kayıtlar otomatik olarak onay bekleyen Kullanıcı hesabı oluşturur. Yönetici onaylayana kadar masalara erişilemez. Şifrenizi kimseyle paylaşmayın. Şimdilik e-posta/şifre kullanılır.</p>
+<label>Şifre<input id="password" type="password" autocomplete="current-password" placeholder="Şifreniz"></label>
+<div class="row"><button id="signin">Giriş yap</button><button id="open-signup" class="alt">Yeni kullanıcı oluştur</button></div>
+</div>
+<div id="auth-signup" class="hidden">
+<h2>Yeni kullanıcı oluştur</h2>
+<label>Ad<input id="first-name" autocomplete="given-name" maxlength="60" placeholder="Adınız"></label>
+<label>Soyad<input id="last-name" autocomplete="family-name" maxlength="60" placeholder="Soyadınız"></label>
+<label>E-posta<input id="signup-email" type="email" autocomplete="email" placeholder="ornek@eposta.com"></label>
+<label>Şifre<input id="signup-password" type="password" autocomplete="new-password" placeholder="En az 8 karakter"></label>
+<div class="row"><button id="signup">Kayıt oluştur</button><button id="back-login" class="alt">Giriş ekranına dön</button></div>
+<p class="note">Yeni kayıtlar yönetici onayı bekler. Yönetici onaylayana kadar masalara erişilemez. Şifrenizi kimseyle paylaşmayın.</p>
+</div>
 </section>
 <section id="workspace" class="hidden">
 <div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button><button id="manager-dashboard" class="alt hidden">Yönetici Paneli</button></div></div>
@@ -96,12 +106,17 @@ function message(s,error=false){$('msg').textContent=s;$('msg').className='statu
 if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
 async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
-async function login(signUp){let email=$('email').value.trim(),password=$('password').value;
-if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
-const displayName=$('display-name').value.trim();if(signUp&&!displayName){message('Yeni kayıt için adınızı yazın.',true);return}const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName}}}):await db.auth.signInWithPassword({email,password});
-if(error){message(error.message,true);return}
-if(signUp)message('Başvuru oluşturuldu. E-posta doğrulamanızdan sonra yönetici onayını bekleyin; otomatik masa erişimi verilmez.');
-else {message('Giriş başarılı.');await checkAuth()}
+function authView(signUp=false){show('auth-login',!signUp);show('auth-signup',signUp)}
+async function login(signUp){
+ const email=$(signUp?'signup-email':'email').value.trim(),password=$(signUp?'signup-password':'password').value;
+ if(!email||password.length<8){message('E-posta ve en az 8 karakterli şifre gerekli.',true);return}
+ const firstName=signUp?$('first-name').value.trim():'',lastName=signUp?$('last-name').value.trim():'';
+ if(signUp&&(!firstName||!lastName)){message('Yeni kayıt için ad ve soyad gerekli.',true);return}
+ const displayName=(firstName+' '+lastName).trim();
+ const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName,first_name:firstName,last_name:lastName}}}):await db.auth.signInWithPassword({email,password});
+ if(error){message(error.message,true);return}
+ if(signUp){authView(false);$('email').value=email;$('password').value='';$('signup-password').value='';message('Başvuru oluşturuldu. E-posta doğrulamanızdan sonra yönetici onayını bekleyin; otomatik masa erişimi verilmez.');}
+ else {message('Giriş başarılı.');await checkAuth()}
 }
 async function loadTables(){const {data:profile,error:profileError}=await db.from('staff_accounts').select('role,active').eq('user_id',state.user.id).maybeSingle();
 if(profileError){message('Kullanıcı durumu okunamadı: '+profileError.message,true);show('workspace',false);return}
@@ -674,7 +689,7 @@ state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',sc
 .subscribe();
 }
 $('tariff-normal').onclick=()=>{activeTariff='normal';renderEditor()};$('tariff-esnaf').onclick=()=>{activeTariff='esnaf';renderEditor()};
-$('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);
+$('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);$('open-signup').onclick=()=>authView(true);$('back-login').onclick=()=>authView(false);
 $('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
 $('refresh').onclick=()=>loadTables();$('save').onclick=save;
 $('back-table').onclick=async()=>{if(state.dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçilsin mi?'))return;state.selected=null;state.dirty=false;show('editor',false);await refreshOrders();window.scrollTo(0,0)};
