@@ -14,6 +14,13 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.row button{padding:8px 12px}
 .note{font-size:13px;color:#c6c6b9;line-height:1.5}.status{padding:12px;margin:12px 0;border-radius:9px;background:#35362a}.error{background:#63312d}.good{background:#274732}
 .hidden{display:none!important}.log-entry{padding:14px 3px;border-bottom:1px solid #484840}.log-entry:last-child{border-bottom:0}.log-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.log-table{font-size:17px;font-weight:750}.log-type{font-size:12px;background:#393c34;border-radius:999px;padding:4px 9px;color:#d9e5d8}.log-detail{margin:8px 0;color:#e2e2d8;font-size:14px;line-height:1.55;white-space:pre-line}.log-meta{color:#aaa99b;font-size:12px}.log-date{margin:22px 0 4px;color:#a9bfac;font-weight:750;letter-spacing:.03em}.log-total{font-weight:700;margin-top:7px}.log-intro{color:#bcbcad;font-size:13px}#summary:not(.hidden){position:fixed;z-index:2000;inset:12px;margin:0;overflow-y:auto;max-width:none;box-shadow:0 0 0 999px #000b;border:2px solid #9cbda2}#summary-body{padding-bottom:22px}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}.divider{border-top:1px solid #55554a;margin:14px 0}
+#editor:not(.hidden){position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;margin:0;border:0;border-radius:0;max-width:none;padding:18px max(18px,calc((100vw - 760px)/2));background:#1d1d19;height:100vh;height:100dvh}
+#editor #table-title{margin:18px 0 12px}
+#editor .row:first-child{position:sticky;top:-18px;z-index:2;background:#1d1d19;padding:10px 0}
+body:has(#editor:not(.hidden)){overflow:hidden}
+.option-overlay{position:fixed;inset:0;background:#000b;z-index:2600;display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.option-sheet{background:#292923;border:1px solid #626258;border-radius:18px 18px 14px 14px;padding:20px;width:100%;max-width:540px;max-height:85dvh;overflow-y:auto}
+.option-sheet h3{margin:0 0 14px}.option-choices{display:grid;gap:10px}.option-choices button{width:100%;text-align:left;background:#3d4038;color:#f8f6ea;padding:16px}.option-choices button:hover{background:#4c594e}.option-choices .cancel{background:#282821;border:1px solid #65655a;text-align:center}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -100,13 +107,40 @@ $('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)
 $('pay-cash').disabled=$('pay-card').disabled=$('split').disabled=$('transfer').disabled=state.loading||!state.lines.length;
 }
 function addProduct(n,p){let x=state.lines.find(z=>z.n===n&&z.p===p);if(x)x.q++;else state.lines.push({n,p,q:1});markDirty()}
+function showOptions(title, options){
+ const overlay=document.createElement('div');overlay.className='option-overlay';
+ const sheet=document.createElement('div');sheet.className='option-sheet';
+ const header=document.createElement('h3');header.textContent=title;sheet.appendChild(header);
+ const list=document.createElement('div');list.className='option-choices';
+ const close=()=>{document.removeEventListener('keydown',onEscape);overlay.remove()};
+ const onEscape=e=>{if(e.key==='Escape')close()};
+ options.forEach(({label,price,onSelect})=>{
+  const b=document.createElement('button');b.type='button';
+  b.textContent=label+' · '+money(price);
+  b.onclick=()=>{close();onSelect()};
+  list.appendChild(b);
+ });
+ const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Vazgeç';
+ cancel.className='cancel';cancel.onclick=close;list.appendChild(cancel);
+ sheet.appendChild(list);overlay.appendChild(sheet);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
+ document.addEventListener('keydown',onEscape);
+ document.body.appendChild(overlay);
+}
 function pickProduct(x){
- if(x.b){const opt=x.b==='f'?{Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}:{Bonfileli:350,Tiftikli:370,Köfteli:280,Tavuklu:260};
- const names=Object.keys(opt),chosen=prompt(x.n+'\\n'+names.map((n,i)=>(i+1)+'. '+n+' · '+money(opt[n])).join('\\n')+'\\nSeçenek numarası:');
- if(chosen===null)return;const i=Number(chosen)-1;if(!Number.isInteger(i)||i<0||i>=names.length){message('Geçersiz seçenek.',true);return}
- addProduct(x.n+' · '+names[i],opt[names[i]]);
- }else if(x.ch){const chosen=confirm(x.n+' · Cheddar +40 TL eklemek ister misiniz?');addProduct(x.n+(chosen?' · Cheddar':''),x.p+(chosen?40:0));}
- else addProduct(x.n,x.p);
+ if(x.b){
+  const options=x.b==='f'
+   ? {Bonfileli:330,Tiftikli:350,Köfteli:260,Tavuklu:240}
+   : {Bonfileli:350,Tiftikli:370,Köfteli:280,Tavuklu:260};
+  showOptions(x.n,Object.entries(options).map(([name,price])=>({
+   label:name,price,onSelect:()=>addProduct(x.n+' · '+name,price)
+  })));
+ }else if(x.ch){
+  showOptions(x.n,[
+   {label:'Normal',price:x.p,onSelect:()=>addProduct(x.n,x.p)},
+   {label:'Cheddar +40',price:x.p+40,onSelect:()=>addProduct(x.n+' · Cheddar',x.p+40)}
+  ]);
+ }else addProduct(x.n,x.p);
 }
 function markDirty(){state.note=$('note').value;state.dirty=true;renderEditor()}
 function change(i,d){let x=state.lines[i];x.q+=d;if(x.q<=0)state.lines.splice(i,1);markDirty()}
