@@ -53,9 +53,9 @@ body:has(#editor:not(.hidden)){overflow:hidden}
   <div class="row"><button id="manager-back" class="alt">← Masalara Dön</button><h2>Yönetici Paneli</h2></div>
   <p class="note">Sam's Coffee · Geçmiş raporlar ve kayıt arşivi</p>
   <div class="manager-tabs">
-   <button class="alt" data-manager-tab="reports">Günlük Raporlar</button>
+   <button class="alt" data-manager-tab="overview">Genel Bakış</button><button class="alt" data-manager-tab="reports">Günlük Raporlar</button>
    <button class="alt" data-manager-tab="logs">İşlem Geçmişi</button>
-   <button class="alt" data-manager-tab="analysis">Satış Analizi</button>
+   <button class="alt" data-manager-tab="analysis">Satış Analizi</button><button class="alt" data-manager-tab="performance">Kullanıcı Performansı</button><button class="alt" data-manager-tab="corrections">Ödeme Düzeltmeleri</button>
    <button class="alt" data-manager-tab="users">Kullanıcı Yönetimi</button>
   </div>
   <div id="manager-date-tools">
@@ -388,7 +388,7 @@ async function audit(){
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
 
-const manager={tab:'reports',payments:[],events:[],users:[],filters:{},exportRows:[],exportName:'rapor'};
+const manager={tab:'overview',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor'};
 const istDate=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 const dateAt=(str)=>new Date(str+'T00:00:00+03:00');
 const dateLabel=(str)=>new Date(str+'T12:00:00+03:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
@@ -441,33 +441,81 @@ async function managerLoad(){
  managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
  try{
   const fromUTC=dateAt(from).toISOString(),toUTC=isoDay(dateAt(to));
-  const needPayment=manager.tab!=='logs',needLogs=manager.tab==='logs';
+  const needPayment=['overview','reports','analysis','performance','corrections'].includes(manager.tab),needLogs=['logs','performance','overview'].includes(manager.tab);
   const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
   if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity)',fromUTC,toUTC));
+ if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
   if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
   const results=await Promise.all(requested);
   if(results[0].error)throw results[0].error;
   manager.users=results[0].data||[];
-  if(needPayment)manager.payments=results[1];
-  if(needLogs)manager.events=results[1];
+  if(needPayment){manager.payments=results[1];if(results[2].error)throw results[2].error;manager.corrections=results[2].data||[];}
+  if(needLogs)manager.events=results[needPayment?3:1];
   manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
+  if(manager.tab==='overview')managerRenderOverview();
+  if(manager.tab==='performance')managerRenderPerformance();
+  if(manager.tab==='corrections')managerRenderCorrections();
   if(manager.tab==='reports')managerRenderReports();
   if(manager.tab==='analysis')managerRenderAnalysis();
   if(manager.tab==='logs')managerRenderLogs();
  }catch(err){$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
  finally{$('manager-load').disabled=false}
 }
+function paymentCorrection(p){return manager.corrections.find(x=>x.payment_id===p.id)}
+function correctedAmount(p){return paymentCorrection(p)?.correction_type==='void'?0:Number(p.amount||0)}
+function effectiveMethod(p){return paymentCorrection(p)?.replacement_method||p.payment_method}
+function managerRenderOverview(){
+ const today=istDate(),todayPayments=manager.payments.filter(p=>istDate(new Date(p.created_at))===today);
+ const open=state.tables.filter(t=>state.orders?.some(o=>o.table_id===t.id&&o.status==='open')).length;
+ const valid=todayPayments.filter(p=>correctedAmount(p)>0);
+ const avg=valid.length?valid.reduce((v,p)=>v+correctedAmount(p),0)/valid.length:0;
+ manager.exportRows=[['Gösterge','Değer'],['Bugünkü ödeme adedi',valid.length],['Ortalama tahsilat',avg]];
+ manager.exportName='sams_genel_bakis';
+ $('manager-content').innerHTML='<h3>Günlük yönetici özeti</h3>'+managerOverview(todayPayments)+
+ '<div class="manager-stats"><div class="manager-stat"><span>Bugünkü Ortalama Tahsilat</span><b>'+money(avg)+'</b></div><div class="manager-stat"><span>Seçili Aralıkta Ödeme</span><b>'+manager.payments.length+'</b></div></div>'+
+ '<p class="note">Bugünün tahsilatı ve seçilen aralığın ödemeleri ayrı gösterilir. İptal edilen işlemler ciroya dahil edilmez. Açık masa sayısı için Masalar ekranına dönün.</p>';
+}
+function managerRenderPerformance(){
+ const people=new Map(manager.users.map(u=>[u.user_id,u.display_name]));
+ const stats=new Map(manager.users.map(u=>[u.user_id,{name:u.display_name,orders:0,payments:0,changes:0}]));
+ manager.events.forEach(e=>{const x=stats.get(e.actor_id);if(!x)return;if(e.event_type==='order_saved')x.orders++;if(e.event_type==='payment')x.payments++;if(e.event_type==='payment_correction')x.changes++;});
+ const rows=[...stats.values()];
+ manager.exportName='sams_kullanici_performansi';
+ manager.exportRows=[['Kullanıcı','Sipariş Kaydı','Ödeme İşlemi','Ödeme Düzeltmesi'],...rows.map(x=>[x.name,x.orders,x.payments,x.changes])];
+ $('manager-content').innerHTML='<h3>Kullanıcı bazlı operasyon</h3><p class="note">Sipariş kayıtları ve ödeme işlemleri kullanıcı hareketlerinden sayılır; satış tutarı kişiye atanmaz.</p>'+
+ '<table class="manager-table"><thead><tr><th>Kullanıcı</th><th>Sipariş kaydı</th><th>Ödeme</th><th>Düzeltme</th></tr></thead><tbody>'+
+ rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.orders+'</td><td>'+x.payments+'</td><td>'+x.changes+'</td></tr>').join('')+'</tbody></table>';
+}
+function managerRenderCorrections(){
+ const people=new Map(manager.users.map(x=>[x.user_id,x.display_name]));
+ manager.exportName='sams_odeme_duzeltmeleri';manager.exportRows=[['Ödeme No','Tarih','Tutar','İşlem','Gerekçe'],...manager.payments.map(p=>[p.id,p.created_at,p.amount,paymentCorrection(p)?.correction_type||'Normal',paymentCorrection(p)?.reason||''])];
+ $('manager-content').innerHTML='<h3>Ödeme düzeltmeleri</h3><p class="note">Bu düzeltmeler yalnızca raporlama kayıtlarını etkiler. Fiziksel POS veya kasada para iadesi gerçekleştirmez; silinen ürünleri masaya geri yüklemez.</p>'+
+ [...manager.payments].reverse().map(p=>{const c=paymentCorrection(p);return '<div class="manager-record"><div class="manager-record-title">Ödeme #'+p.id+' · '+money(p.amount)+'</div><div class="manager-record-info">'+esc(p.payment_method)+' · '+esc(new Date(p.created_at).toLocaleString('tr-TR',{timeZone:'Europe/Istanbul'}))+'</div>'+
+ (c?'<p class="note">Düzeltilmiş: '+(c.correction_type==='void'?'İptal edildi':esc(c.replacement_method))+' · '+esc(c.reason)+'</p>':'<div class="row"><button class="alt" data-correct="'+p.id+'" data-type="method">Ödeme türünü düzelt</button><button class="warn" data-correct="'+p.id+'" data-type="void">Kaydı iptal et</button></div>')+'</div>'}).join('');
+ document.querySelectorAll('[data-correct]').forEach(b=>b.onclick=async()=>{
+  if(state.role!=='manager')return;
+  const id=Number(b.dataset.correct),type=b.dataset.type;
+  let method=null;
+  if(type==='method'){method=prompt('Doğru yöntem: Nakit veya Kart');if(method===null)return;method=method.trim();if(!['Nakit','Kart'].includes(method)){managerFeedback('Yöntem Nakit veya Kart olmalı.',true);return}}
+  const reason=prompt('Düzeltme gerekçesi (en az 5 karakter):');if(reason===null)return;
+  if(reason.trim().length<5){managerFeedback('En az 5 karakterlik gerekçe yazın.',true);return}
+  if(!confirm('Ödeme #'+id+' için '+(type==='void'?'rapor kaydını iptal edilmiş olarak işaretle':'yöntemi '+method+' yap')+'?'))return;
+  b.disabled=true;const {error}=await db.rpc('manager_correct_payment',{p_payment_id:id,p_type:type,p_method:method,p_reason:reason.trim()});
+  if(error){managerFeedback('Düzeltme kaydedilemedi: '+error.message,true);b.disabled=false;return}
+  await managerLoad();
+ });
+}
 function managerOverview(payments){
- const total=payments.reduce((s,p)=>s+Number(p.amount||0),0);
- const cash=payments.filter(p=>p.payment_method==='Nakit').reduce((s,p)=>s+Number(p.amount||0),0);
- const card=payments.filter(p=>p.payment_method==='Kart').reduce((s,p)=>s+Number(p.amount||0),0);
+ const total=payments.reduce((s,p)=>s+correctedAmount(p),0);
+ const cash=payments.filter(p=>effectiveMethod(p)==='Nakit').reduce((s,p)=>s+correctedAmount(p),0);
+ const card=payments.filter(p=>effectiveMethod(p)==='Kart').reduce((s,p)=>s+correctedAmount(p),0);
  return '<div class="manager-stats">'+[['Toplam Tahsilat',money(total)],['Nakit',money(cash)],['Kart',money(card)],['Ödeme İşlemi',String(payments.length)]].map(x=>'<div class="manager-stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
 }
 function managerRenderReports(){
  const rows=manager.payments,groups=new Map();
  rows.forEach(p=>{const day=istDate(new Date(p.created_at));if(!groups.has(day))groups.set(day,{total:0,cash:0,card:0,count:0});
- const x=groups.get(day),amount=Number(p.amount||0);x.total+=amount;x.count++;
- if(p.payment_method==='Nakit')x.cash+=amount;else if(p.payment_method==='Kart')x.card+=amount;});
+ const x=groups.get(day),amount=correctedAmount(p);x.total+=amount;if(amount>0)x.count++;
+ if(effectiveMethod(p)==='Nakit')x.cash+=amount;else if(effectiveMethod(p)==='Kart')x.card+=amount;});
  const items=[...groups].sort((a,b)=>b[0].localeCompare(a[0]));
  let selected=manager.selectedDay;if(!groups.has(selected))selected='';
  manager.exportName='sams_gunluk_rapor';manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,v])=>[d,v.total,v.cash,v.card,v.count])];
@@ -481,17 +529,17 @@ function managerDayDetail(day){
  const payments=manager.payments.filter(p=>istDate(new Date(p.created_at))===day);
  manager.selectedDay=day;
  const totals=new Map();
- payments.forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ payments.filter(p=>correctedAmount(p)>0).forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
  const x=totals.get(key)||{name:i.product_name,q:0,amount:0};x.q+=Number(i.quantity);x.amount+=Number(i.unit_price)*Number(i.quantity);totals.set(key,x)}));
  const items=[...totals.values()].sort((a,b)=>b.q-a.q);
  $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+managerOverview(payments)+'<h4>Satılan ürünler</h4>'+
  (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>').join('')+'</tbody></table>':'<p>Ürün kaydı yok.</p>');
  manager.exportName='sams_gunluk_'+day;
- manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),x.payment_method,x.amount])];
+ manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),effectiveMethod(x),correctedAmount(x)])];
 }
 function managerRenderAnalysis(){
  const products=new Map();
- manager.payments.forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
+ manager.payments.filter(p=>correctedAmount(p)>0).forEach(p=>(p.payment_items||[]).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
  const o=products.get(key)||{name:i.product_name,q:0,amount:0};o.q+=Number(i.quantity);o.amount+=Number(i.unit_price)*Number(i.quantity);products.set(key,o)}));
  const items=[...products.values()].sort((a,b)=>b.amount-a.amount);
  manager.exportName='sams_satis_analizi';
