@@ -13,7 +13,7 @@ input,textarea{width:100%;background:#131310;color:#faf9f0;border:1px solid #666
 table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;padding:10px 2px}td:last-child{text-align:right}
 .row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.row button{padding:8px 12px}
 .note{font-size:13px;color:#c6c6b9;line-height:1.5}.status{padding:12px;margin:12px 0;border-radius:9px;background:#35362a}.error{background:#63312d}.good{background:#274732}
-.hidden{display:none!important}.log-entry{padding:14px 3px;border-bottom:1px solid #484840}.log-entry:last-child{border-bottom:0}.log-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.log-table{font-size:17px;font-weight:750}.log-type{font-size:12px;background:#393c34;border-radius:999px;padding:4px 9px;color:#d9e5d8}.log-detail{margin:8px 0;color:#e2e2d8;font-size:14px;line-height:1.55;white-space:pre-line}.log-meta{color:#aaa99b;font-size:12px}.log-date{margin:22px 0 4px;color:#a9bfac;font-weight:750;letter-spacing:.03em}.log-total{font-weight:700;margin-top:7px}.log-intro{color:#bcbcad;font-size:13px}#summary:not(.hidden){position:fixed;z-index:2000;inset:12px;margin:0;overflow-y:auto;max-width:none;box-shadow:0 0 0 999px #000b;border:2px solid #9cbda2}#summary-body{padding-bottom:22px}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}.divider{border-top:1px solid #55554a;margin:14px 0}
+.hidden{display:none!important}.log-entry{padding:14px 3px;border-bottom:1px solid #484840}.log-entry:last-child{border-bottom:0}.log-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.log-table{font-size:17px;font-weight:750}.log-type{font-size:12px;background:#393c34;border-radius:999px;padding:4px 9px;color:#d9e5d8}.log-detail{margin:8px 0;color:#e2e2d8;font-size:14px;line-height:1.55;white-space:pre-line}.log-meta{color:#aaa99b;font-size:12px}.log-date{margin:22px 0 4px;color:#a9bfac;font-weight:750;letter-spacing:.03em}.log-total{font-weight:700;margin-top:7px}.log-intro{color:#bcbcad;font-size:13px}#summary:not(.hidden){position:fixed;z-index:2000;inset:12px;margin:0;overflow-y:auto;max-width:none;box-shadow:0 0 0 999px #000b;border:2px solid #9cbda2}#summary-body{padding-bottom:22px}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}#tables button small{color:#1a3024;font-weight:750;opacity:1}.divider{border-top:1px solid #55554a;margin:14px 0}
 #editor:not(.hidden){position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;margin:0;border:0;border-radius:0;max-width:none;padding:18px max(18px,calc((100vw - 760px)/2));background:#1d1d19;height:100vh;height:100dvh}
 #editor #table-title{margin:18px 0 12px}
 #editor .row:first-child{position:sticky;top:-18px;z-index:2;background:#1d1d19;padding:10px 0}
@@ -174,7 +174,7 @@ async function pay(method){
  if(state.loading||!state.selected)return;
  const sum=state.lines.reduce((a,x)=>a+x.p*x.q,0);
  if(sum<=0){message('Masa boş; kapatılacak hesap yok.',true);return}
- if(!confirm(state.selected+' · '+money(sum)+' · '+method+' ile hesap kapatılsın mı?\\nKaydedilmemiş ürünler önce kaydedilir.'))return;
+ if(!confirm(state.selected+' · '+money(sum)+' · '+method+' ile hesap kapatılsın mı?\nKaydedilmemiş ürünler önce kaydedilir.'))return;
  if(!await ensureSaved())return;
  state.loading=true;
  try{
@@ -195,11 +195,11 @@ async function addCustom(){
 }
 async function transfer(){
  if(state.loading||!state.selected||!state.lines.length){message('Taşınacak ürün yok.',true);return}
- const target=prompt('Hedef masa adını yazın:\\n'+state.tables.filter(t=>t.id!==state.selected).map(t=>t.id).join(' · '));
+ const target=prompt('Hedef masa adını yazın:\n'+state.tables.filter(t=>t.id!==state.selected).map(t=>t.id).join(' · '));
  if(target===null)return;
  const dest=target.trim();
  if(!state.tables.some(t=>t.id===dest)||dest===state.selected){message('Geçerli ve farklı bir hedef masa seçin.',true);return}
- if(!confirm(state.selected+' → '+dest+'\\nMasa taşınacak veya hedef doluysa birleştirilecek. Kaydedilmemiş ürünler önce kaydedilir. Devam?'))return;
+ if(!confirm(state.selected+' → '+dest+'\nMasa taşınacak veya hedef doluysa birleştirilecek. Kaydedilmemiş ürünler önce kaydedilir. Devam?'))return;
  if(!await ensureSaved())return;
  const {data,error}=await db.from('orders').select('id,version').eq('table_id',dest).eq('status','open').maybeSingle();
  if(error){message('Hedef masa okunamadı: '+error.message,true);return}
