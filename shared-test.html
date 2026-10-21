@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#242722">
+<title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#242722"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Sam’s"><meta name="application-name" content="Sam’s"><meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/svg+xml" href="./sams-icon.svg"><link rel="apple-touch-icon" href="./sams-icon.svg">
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#171714;color:#f7f4e9}
 *{box-sizing:border-box}body{margin:0}header{padding:16px;background:#20201d;border-bottom:1px solid #3b3b34;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -92,6 +92,47 @@ input:focus,textarea:focus,select:focus{border-color:#a6b58c;box-shadow:0 0 0 3p
 .manager-tabs .active{background:#929e78;color:#182018}
 .manager-date-row label{color:#f0efe7}.manager-stat{background:#3a4136;border-color:#586250}
 #menu-option-list .manager-record{background:#3a4136;border-color:#586250}
+
+/* Sam's mobile app experience */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;touch-action:manipulation}
+button svg{flex-shrink:0}
+#tables{gap:12px}
+#tables button{min-height:94px;border-radius:17px;padding:16px 12px;flex-direction:column;gap:7px;font-size:16px;letter-spacing:.01em;box-shadow:inset 0 0 0 1px #ffffff14}
+#tables button.table-open{box-shadow:inset 0 0 0 1px #e8e6dc44}
+#products{gap:10px}
+#products button{min-height:78px;text-align:left;align-items:flex-start;flex-direction:column;padding:14px;border-radius:14px;line-height:1.35}
+#categories{gap:8px;overflow-x:auto;flex-wrap:nowrap;padding:3px 0 10px;scrollbar-width:thin}
+#categories button{white-space:nowrap;flex-shrink:0;border-radius:999px;min-height:40px}
+#editor #table-title{font-size:25px;letter-spacing:-.025em}
+#total{font-size:23px;color:#dbe5cb}
+#workspace>.panel>.row:first-child{margin-bottom:12px}
+#workspace>.panel>.row:first-child h2{margin:0;font-size:25px}
+#manager-screen .manager-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.manager-tabs button{min-height:56px;line-height:1.25;border-radius:12px}
+#auth{box-shadow:0 20px 55px #0003}
+#auth h2{letter-spacing:-.03em}
+#auth input{min-height:48px}
+:focus-visible{outline:2px solid #c5d4a6;outline-offset:3px}
+@media(max-width:560px){
+ header{position:sticky;top:0;z-index:100;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:12px}
+ header h1{font-size:18px}
+ header small{font-size:11px}
+ main{padding:14px 12px max(24px,env(safe-area-inset-bottom))}
+ .panel{margin-bottom:12px}
+ #workspace>.panel>.row:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ #workspace>.panel>.row:last-child button{width:100%;min-width:0;font-size:12px;padding:11px 8px}
+ #editor:not(.hidden){padding:12px 12px max(24px,env(safe-area-inset-bottom))}
+ #editor .row:first-child{top:-12px;padding:12px 0}
+ #editor .row:first-child button{font-size:13px}
+ #editor .row{gap:9px}
+ #editor .row button{font-size:13px}
+ #products button{font-size:13px}
+ .manager-tabs button{font-size:12px}
+}
+@media(display-mode:standalone){header{padding-top:max(16px,env(safe-area-inset-top))}}
+@media print{header{position:static}button svg{display:none}}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -114,23 +155,23 @@ input:focus,textarea:focus,select:focus{border-color:#a6b58c;box-shadow:0 0 0 3p
 </div>
 </section>
 <section id="workspace" class="hidden">
-<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt">Yenile ↻</button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt">+ Özel Masa</button><button id="report" class="alt">Gün Sonu</button><button id="audit" class="alt hidden">İşlem Geçmişi</button><button id="staff-admin" class="alt hidden">Kullanıcı Yönetimi</button><button id="manager-dashboard" class="alt hidden">Yönetici Paneli</button></div></div>
+<div class="panel"><div class="row"><h2>Masalar</h2><button id="refresh" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/></svg><span>Yenile ↻</span></button></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>+ Özel Masa</span></button><button id="report" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15v-4m5 4V7m5 8v-6"/></svg><span>Gün Sonu</span></button><button id="audit" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18M3 9h18M3 14h12M3 19h8"/></svg><span>İşlem Geçmişi</span></button><button id="staff-admin" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Kullanıcı Yönetimi</span></button><button id="manager-dashboard" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><span>Yönetici Paneli</span></button></div></div>
 <div id="editor" class="panel hidden">
-<div class="row"><button id="back-table" class="alt">← Masalara Dön</button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
+<div class="row"><button id="back-table" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>← Masalara Dön</span></button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Hesap/taşıma işleminden önce bu değişiklikler kaydedilecek. Başka cihazdaki güncellemeler birbiri üzerine yazılmaz.</p>
 <h3>Ürün ekle</h3><div class="row" style="margin-bottom:12px"><button id="tariff-normal">Normal Menü</button><button id="tariff-esnaf" class="alt">Esnaf Tarifesi</button></div><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
 <div class="divider"></div><h3>Sipariş</h3><div id="lines"></div>
 <label>Not<textarea rows="2" id="note" placeholder="Sipariş notu"></textarea></label>
-<div class="row"><b id="total">0 TL</b><button id="save">Siparişi Kaydet</button></div>
+<div class="row"><b id="total">0 TL</b><button id="save"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg><span>Siparişi Kaydet</span></button></div>
 <div class="divider"></div>
-<div class="row"><button id="pay-cash" class="warn">Nakit Kapat</button><button id="pay-card" class="alt">Kart Kapat</button><button id="split" class="alt">Parça Hesap Al</button><button id="transfer" class="alt">Masa Taşı / Birleştir</button></div>
+<div class="row"><button id="pay-cash" class="warn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg><span>Nakit Kapat</span></button><button id="pay-card" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span>Kart Kapat</span></button><button id="split" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg><span>Parça Hesap Al</span></button><button id="transfer" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h14m-4-4 4 4-4 4M17 17H3m4-4-4 4 4 4"/></svg><span>Masa Taşı / Birleştir</span></button></div>
 <p class="note">Ödeme ve masa taşıma öncesinde siparişi kaydedin. Aynı masada eşzamanlı değişiklik olursa eski sürümle işlem engellenir.</p>
 </div>
 <section id="summary" class="panel hidden"><div class="row"><h2 id="summary-title">Gün Sonu</h2><button class="alt" id="summary-close">Kapat</button></div><div id="summary-body"></div></section>
 </section>
 <section id="manager-screen" class="hidden">
  <div class="panel">
-  <div class="row"><button id="manager-back" class="alt">← Masalara Dön</button><h2>Yönetici Paneli</h2></div>
+  <div class="row"><button id="manager-back" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>← Masalara Dön</span></button><h2>Yönetici Paneli</h2></div>
   <p class="note">Sam's Coffee · Geçmiş raporlar ve kayıt arşivi</p>
   <div class="manager-tabs">
    <button class="alt" data-manager-tab="overview">Genel Bakış</button><button class="alt" data-manager-tab="reports">Günlük Raporlar</button>
@@ -794,4 +835,4 @@ $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=t
 db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false);show('manager-screen',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
-</script></body></html>
+</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script></body></html>
