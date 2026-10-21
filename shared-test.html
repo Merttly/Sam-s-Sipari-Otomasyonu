@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#242722"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Sam’s Sipariş"><meta name="application-name" content="Sam’s Sipariş"><meta name="mobile-web-app-capable" content="yes"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/png" sizes="192x192" href="./sams-icon-192.png?v=2"><link rel="apple-touch-icon" sizes="180x180" href="./sams-icon-180.png?v=2">
+<script>
+(function(){
+  try { if (localStorage.getItem('sams-pos-theme') === 'dark') document.documentElement.dataset.theme='dark'; }
+  catch (_e) { /* Private browsing or disabled storage: default to light. */ }
+})();
+</script>
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#171714;color:#f7f4e9}
 *{box-sizing:border-box}body{margin:0}header{padding:16px;background:#20201d;border-bottom:1px solid #3b3b34;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -436,8 +442,227 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  #tables .table-section-grid{gap:9px}
 }
 
+
+/* Optional, locally remembered night mode. The original light theme stays the default. */
+header .header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+header #theme-toggle{
+ width:37px;height:37px;min-width:37px;min-height:37px;padding:0;
+ display:grid;place-items:center;flex:0 0 auto;border-radius:11px;
+ border:1px solid #dce2d8;background:#eef2e8;color:#365a49;box-shadow:none;
+}
+#theme-toggle svg{display:block}
+#theme-toggle .theme-sun{display:none}
+html[data-theme="dark"] #theme-toggle .theme-moon{display:none}
+html[data-theme="dark"] #theme-toggle .theme-sun{display:block}
+#theme-toggle:focus-visible{outline:2px solid #6d9679;outline-offset:3px}
+@media(max-width:380px){
+ header .header-actions{gap:5px}
+ header #theme-toggle{width:34px;height:34px;min-width:34px;min-height:34px}
+}
+
+/* Colors across POS, editor, reports, users, and overlays; no functionality changes. */
+html[data-theme="dark"]{
+ color-scheme:dark;
+ --cream:#1c231e;--paper:#273229;--sage:#82987f;--sage-dark:#b7c8a7;
+ --ink:#ebf1e5;--muted:#a5b5a4;--line:#435549;--soft:#37473b;
+ --pos-ink:#eaf2e8;--pos-forest:#acccb0;--pos-mint:#344a3a;--pos-cream:#1c231e;
+ background:#1c231e;color:#ebf1e5;
+}
+html[data-theme="dark"] body{background:#1c231e;color:#ebf1e5}
+html[data-theme="dark"] header{background:#202b23!important;color:#e9f0e6;border-bottom:1px solid #34483b!important}
+html[data-theme="dark"] header h1{color:#f0f4e9}
+html[data-theme="dark"] header .header-sub{color:#b1c8b7}
+html[data-theme="dark"] header small{color:#98ac9e}
+html[data-theme="dark"] header #theme-toggle,
+html[data-theme="dark"] header #logout{
+ background:#35493b;color:#ecf3e8;border-color:#4c6753;
+}
+html[data-theme="dark"] main{color:#eaf0e7}
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4{color:#eaf0e7}
+html[data-theme="dark"] .panel{
+ background:#273229;color:#e9f0e7;border-color:#435549;
+ box-shadow:0 7px 26px #0b140f33;
+}
+html[data-theme="dark"] small,
+html[data-theme="dark"] .muted,
+html[data-theme="dark"] .note,
+html[data-theme="dark"] .log-intro,
+html[data-theme="dark"] .manager-muted{color:#a9b9aa}
+html[data-theme="dark"] .divider{border-color:#435549}
+html[data-theme="dark"] .status,
+html[data-theme="dark"] #msg.good{background:#324839;color:#d9eed9;border:1px solid #466651}
+html[data-theme="dark"] .status.error{background:#603d3a;color:#fff1ed;border-color:#875750}
+html[data-theme="dark"] button.alt{background:#384c3d;color:#ecf2e7;border-color:#536953}
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select{
+ background:#1f2c24;color:#edf2ea;border-color:#536a59;
+}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{color:#9aada0}
+html[data-theme="dark"] td{border-color:#46594a}
+html[data-theme="dark"] #pos-hero{
+ background:linear-gradient(120deg,#264735 0%,#1a392e 100%);
+ box-shadow:0 12px 30px #09160d66;
+}
+html[data-theme="dark"] #pos-actions{
+ background:#27352b;border-color:#435849;box-shadow:0 7px 24px #0a150b44;
+}
+html[data-theme="dark"] #pos-actions button{color:#e1eddf}
+html[data-theme="dark"] #pos-actions .pos-action-icon{background:#394f40;color:#dcead8}
+html[data-theme="dark"] #pos-actions button:first-child .pos-action-icon{background:#a0b99b;color:#183326}
+html[data-theme="dark"] #pos-table-heading h2{color:#ebf2e8}
+html[data-theme="dark"] .pos-overline{color:#a5b9a8}
+html[data-theme="dark"] #pos-table-heading #custom{
+ background:#334a3a;color:#dbeddf;border-color:#4a6850;
+}
+html[data-theme="dark"] #tables .table-section--outside .table-section-header{
+ background:#314c3a;color:#e1f0dd;border-color:#46634c;
+}
+html[data-theme="dark"] #tables .table-section--inside .table-section-header{
+ background:#3c4b39;color:#e5efd9;border-color:#526450;
+}
+html[data-theme="dark"] #tables .table-section--custom .table-section-header,
+html[data-theme="dark"] #tables .table-section--other .table-section-header{
+ background:#383f36;color:#e5eada;border-color:#4e5e4e;
+}
+html[data-theme="dark"] #tables .table-section-count{
+ background:#203528bd;color:#e0f0dd;border-color:#64806a;
+}
+html[data-theme="dark"] #tables button{
+ background:#2a382e;color:#eaf0e7;border-color:#465d4a;
+ box-shadow:0 3px 13px #07130c44!important;
+}
+html[data-theme="dark"] #tables button.table-open{
+ background:#3d614b;color:#fffcef;border-color:#729279;
+}
+html[data-theme="dark"] #tables button::before{background:#7f9485}
+html[data-theme="dark"] #tables button.table-open::before{background:#add9a7}
+html[data-theme="dark"] #tables button small{color:#b9cabc}
+html[data-theme="dark"] #tables .table-watermark{color:#bddbb9;opacity:.13}
+html[data-theme="dark"] #tables button.table-open .table-watermark{color:#d1f1c7;opacity:.12}
+html[data-theme="dark"] #tables .table-symbol{
+ background:#354c3d;color:#c4d9c0;border-color:#506b55;
+}
+html[data-theme="dark"] #tables button.table-open .table-symbol{
+ background:#51705b;color:#eef6e8;border-color:#799a7c;
+}
+html[data-theme="dark"] #tables .table-section-empty{
+ border-color:#516550;color:#b5c8b4;
+}
+html[data-theme="dark"] #pos-bottom-nav{
+ background:#25352a!important;border-color:#3d5344;box-shadow:0 -5px 22px #06140a55;
+}
+html[data-theme="dark"] #pos-bottom-nav button{color:#aebfb0}
+html[data-theme="dark"] #pos-bottom-nav button.active{background:#405d48;color:#f1f7ea}
+html[data-theme="dark"] #editor:not(.hidden),
+html[data-theme="dark"] #editor.panel{
+ background:#253129!important;color:#e9efe6!important;border-color:#425647!important;
+}
+html[data-theme="dark"] #editor>.row:first-child{
+ background:#253129!important;color:#e9efe6!important;border-color:#405447;
+}
+html[data-theme="dark"] #editor h2,
+html[data-theme="dark"] #editor h3,
+html[data-theme="dark"] #editor #table-title{color:#edf3e9}
+html[data-theme="dark"] #editor #back-table{
+ background:#364b3b!important;color:#f0f5ed!important;border-color:#55735a!important;
+}
+html[data-theme="dark"] #editor .tariff-switch{
+ background:#2c4233;border-color:#496451;
+}
+html[data-theme="dark"] #editor .tariff-switch button.alt{
+ background:transparent;color:#bdd5c0;border-color:transparent;
+}
+html[data-theme="dark"] #editor .alt{background:#38513f;color:#e6f2e3;border-color:#516b55}
+html[data-theme="dark"] #editor #products button{background:#344638;color:#e8f1e6;border-color:#536956}
+html[data-theme="dark"] #editor #products .product-price{color:#b7d7b9}
+html[data-theme="dark"] #editor input,
+html[data-theme="dark"] #editor textarea{
+ background:#1d2b22;color:#ecf4e9;border-color:#536b56;
+}
+html[data-theme="dark"] #editor #dirty-notice{color:#d3dfce}
+html[data-theme="dark"] #editor #lines .order-line{border-color:#415748}
+html[data-theme="dark"] #editor #lines .order-line-name,
+html[data-theme="dark"] #editor #lines .order-line-sum{color:#ecf4e8}
+html[data-theme="dark"] #editor #lines .order-line-meta{color:#a9bdab}
+html[data-theme="dark"] #editor #lines .order-line-stepper{
+ background:#304537;border-color:#506956;
+}
+html[data-theme="dark"] #editor #lines .order-line-step{
+ background:#425d49!important;color:#f4f7ee!important;border-color:#65816a;
+}
+html[data-theme="dark"] #editor #lines .order-line-qty{color:#f1f6e9}
+html[data-theme="dark"] #manager-screen .panel{
+ background:#273229;color:#ecf0e7;border-color:#46594b;
+}
+html[data-theme="dark"] #manager-screen .manager-tabs button:not(.active){
+ background:#3a4b3d;color:#e6eee2;border:1px solid #516652;
+}
+html[data-theme="dark"] #manager-screen .manager-tabs .active{
+ background:#a3bb98;color:#172e20;
+}
+html[data-theme="dark"] #manager-screen .manager-date-row label{color:#dceadc}
+html[data-theme="dark"] #manager-screen .manager-date-row input,
+html[data-theme="dark"] #manager-screen .manager-date-row select{
+ background:#1e2e24;color:#eaf3e6;border-color:#506a55;
+}
+html[data-theme="dark"] #manager-screen #manager-feedback,
+html[data-theme="dark"] #manager-screen #manager-content>h3{color:#dcebdc}
+html[data-theme="dark"] #manager-screen .manager-stat{
+ background:#34483a!important;color:#eaf2e4!important;border-color:#55705a;
+}
+html[data-theme="dark"] #manager-screen .manager-stat span{color:#bacfba!important}
+html[data-theme="dark"] #manager-screen .manager-stat b{color:#f4f8ef!important}
+html[data-theme="dark"] #manager-screen #manager-content>.note{color:#b6cbb8!important}
+html[data-theme="dark"] #manager-screen #overview-refresh{
+ background:#3a5540!important;color:#e6f2e2!important;border-color:#55755b;
+}
+html[data-theme="dark"] #manager-screen .manager-record{
+ background:#303f34;color:#e7eee5;border-color:#4b6250;
+}
+html[data-theme="dark"] #manager-screen .manager-record-title{color:#edf4e9}
+html[data-theme="dark"] #manager-screen .manager-record .log-type{
+ background:#48624d;color:#e7f4e3;
+}
+html[data-theme="dark"] #manager-screen .manager-record .log-detail{color:#d4e5d6}
+html[data-theme="dark"] #manager-screen .manager-record-info{color:#b4c6b6!important}
+html[data-theme="dark"] #manager-screen .manager-exports{border-color:#425747}
+html[data-theme="dark"] #summary:not(.hidden){
+ background:#29392f;color:#e9f3e5;border-color:#64826a;
+}
+html[data-theme="dark"] #summary h2,
+html[data-theme="dark"] #summary h3{color:#ebf3e7}
+html[data-theme="dark"] .log-entry{border-color:#46594a}
+html[data-theme="dark"] .log-detail{color:#ddebd9}
+html[data-theme="dark"] .log-meta{color:#adbfae}
+html[data-theme="dark"] .option-sheet{
+ background:#29392e;color:#ecf3e9;border-color:#56705b;
+}
+html[data-theme="dark"] .option-choices button{
+ background:#3c5241;color:#eaf2e7;
+}
+html[data-theme="dark"] .option-choices .cancel{
+ background:#26372b;color:#eaf2e7;border-color:#526b57;
+}
+html[data-theme="dark"] #auth{
+ background:#29382f;color:#e9f1e6;border-color:#425a49;
+}
+@media print{
+ html[data-theme="dark"] #manager-screen .panel,
+ html[data-theme="dark"] #manager-screen .manager-record{
+  background:#fff!important;color:#111!important;border-color:#ddd!important;
+ }
+ html[data-theme="dark"] #manager-screen .manager-stat{
+  background:#eee!important;color:#111!important;
+ }
+ html[data-theme="dark"] #manager-screen .manager-stat span,
+ html[data-theme="dark"] #manager-screen .manager-stat b{color:#111!important}
+}
 </style></head><body>
-<header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
+<header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
 <main>
 <div id="msg" class="status">Bağlanılıyor...</div>
 <section id="auth" class="panel hidden">
@@ -1196,4 +1421,24 @@ $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=t
 db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false);show('manager-screen',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
-</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script></body></html>
+</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script><script>
+(function(){
+ const button=document.getElementById('theme-toggle');
+ if(!button)return;
+ function sync(){
+  const dark=document.documentElement.dataset.theme==='dark';
+  button.setAttribute('aria-pressed',String(dark));
+  button.setAttribute('aria-label',dark?'Aydınlık temaya geç':'Karanlık temaya geç');
+  button.title=dark?'Aydınlık temaya geç':'Karanlık temaya geç';
+ }
+ button.addEventListener('click',function(){
+  const dark=document.documentElement.dataset.theme!=='dark';
+  if(dark)document.documentElement.dataset.theme='dark';
+  else delete document.documentElement.dataset.theme;
+  try{localStorage.setItem('sams-pos-theme',dark?'dark':'light');}catch(_e){}
+  sync();
+ });
+ sync();
+})();
+</script>
+</body></html>
