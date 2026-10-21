@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#f5f0e6">
+<title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#242722">
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#171714;color:#f7f4e9}
 *{box-sizing:border-box}body{margin:0}header{padding:16px;background:#20201d;border-bottom:1px solid #3b3b34;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -69,6 +69,29 @@ input:focus,textarea:focus,select:focus{border-color:#82916c;box-shadow:0 0 0 3p
 #menu-option-list .manager-record{background:#f5f6ef;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
 @media(max-width:480px){header{padding:15px 16px}main{padding:14px}.panel{padding:16px;border-radius:16px}#auth{margin:18px auto;padding:20px}button{min-height:43px}}
 @media print{body{background:#fff!important;color:#111!important}.panel{background:#fff!important;color:#111!important;box-shadow:none}.manager-stat{background:#eee!important;color:#111!important}}
+/* Sam's charcoal & olive theme — visual-only override */
+:root{color-scheme:dark;--cream:#242722;--paper:#2e322c;--sage:#929e78;--sage-dark:#a6b58c;--ink:#f0efe7;--muted:#c1c6b8;--line:#4d5548;--soft:#414a38;background:#242722;color:#f0efe7}
+body{background:#242722;color:#f0efe7}
+header{background:#2b3029;border-bottom-color:#4d5548;box-shadow:0 2px 12px #0002}
+header h1,h2,h3,h4{color:#e8e6dc}
+header small,small,.muted,.note,.log-intro,.manager-muted,.manager-record-info{color:#c1c6b8}
+.panel{background:#30352e;border-color:#4d5548;box-shadow:0 6px 24px #0002}
+button{background:#929e78;color:#182018}
+button.alt{background:#414a38;color:#f0efe7;border-color:#5b6650}
+button.warn{background:#bc816a;color:#fff}
+input,textarea,select{background:#242922;color:#f0efe7;border-color:#67715f;outline-color:#a6b58c}
+input:focus,textarea:focus,select:focus{border-color:#a6b58c;box-shadow:0 0 0 3px #929e7855}
+.status{background:#414a38;color:#f0efe7}.error{background:#693d37;color:#fff}.good{background:#38503b;color:#fff}
+.divider,.log-entry,.manager-record,.manager-table td,.manager-table th,td{border-color:#4d5548}
+.log-type{background:#414a38;color:#e8e6dc}.log-detail{color:#f0efe7}.log-meta{color:#c1c6b8}.log-date{color:#b8c7a0}
+#summary:not(.hidden){background:#30352e;border-color:#929e78}
+.table-open{background:#929e78;color:#182018}
+#editor:not(.hidden),#editor .row:first-child{background:#242722;color:#f0efe7}
+.option-sheet{background:#30352e;border-color:#596250}
+.option-choices button{background:#414a38;color:#f0efe7}.option-choices button:hover{background:#566349}.option-choices .cancel{background:#30352e;border-color:#67715f}
+.manager-tabs .active{background:#929e78;color:#182018}
+.manager-date-row label{color:#f0efe7}.manager-stat{background:#3a4136;border-color:#586250}
+#menu-option-list .manager-record{background:#3a4136;border-color:#586250}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
