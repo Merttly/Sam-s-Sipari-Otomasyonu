@@ -619,28 +619,47 @@ function managerEditMenu(item){
  const x=item||{id:null,category:'Kahve',name:'',normal_price:0,esnaf_price:null,kind:'plain',options:[],active:true};
  const panel=$('manager-content');
  panel.innerHTML='<button class="alt" id="menu-back">← Menü listesi</button><h3>'+(item?'Ürün Düzenle':'Yeni Ürün')+'</h3>'+
- '<label>Kategori<input id="menu-cat" maxlength="50" value="'+esc(x.category)+'"></label>'+
+ '<label>Kategori<input id="menu-cat" list="menu-categories" maxlength="50" value="'+esc(x.category)+'"></label>'+
+ '<datalist id="menu-categories">'+[...new Set(menuCatalog.map(p=>p.category))].map(c=>'<option value="'+esc(c)+'"></option>').join('')+'</datalist>'+
  '<label>Ürün adı<input id="menu-name" maxlength="120" value="'+esc(x.name)+'"></label>'+
- '<label>Normal fiyat (TL)<input id="menu-normal" type="number" min="0" step=".01" value="'+x.normal_price+'"></label>'+
- '<label>Esnaf fiyatı (boşsa normal fiyat)<input id="menu-esnaf" type="number" min="0" step=".01" value="'+(x.esnaf_price??'')+'"></label>'+
- '<label>Seçenek türü<select id="menu-kind"><option value="plain">Seçeneksiz</option><option value="options">Ekstralar / alt seçenekler</option><option value="bowl">Bowl seçenekleri</option></select></label>'+
- '<label>Seçenekler (her satır: Ad;Normal fiyat;Esnaf fiyatı — esnaf boşsa normal)<textarea id="menu-options" rows="7"></textarea></label>'+
+ '<div class="row"><label style="flex:1;min-width:130px">Normal fiyat (TL)<input id="menu-normal" type="number" min="0" step=".01" inputmode="decimal" value="'+x.normal_price+'"></label>'+
+ '<label style="flex:1;min-width:130px">Esnaf fiyatı (TL)<input id="menu-esnaf" type="number" min="0" step=".01" inputmode="decimal" placeholder="Normal fiyat kullanılsın" value="'+(x.esnaf_price??'')+'"></label></div>'+
+ '<label>Ürün tipi<select id="menu-kind"><option value="plain">Seçeneksiz ürün</option><option value="options">Ekstralar / alt seçenekler</option><option value="bowl">Bowl seçenekleri</option></select></label>'+
+ '<div id="menu-options-area"><h4>Seçenekler ve ekstralar</h4><p class="note">Her seçeneğin adını ve fiyatını ayrı ayrı girin. Esnaf fiyatı boş bırakılırsa normal fiyat kullanılır.</p><div id="menu-option-list"></div><button class="alt" id="menu-add-option" type="button">+ Seçenek Ekle</button></div>'+
  '<label><input id="menu-active" type="checkbox" style="width:auto" '+(x.active?'checked':'')+'> Satışta aktif</label>'+
  '<button id="menu-save">Değişiklikleri Kaydet</button><p class="note" id="menu-status"></p>';
  $('menu-kind').value=x.kind;
- $('menu-options').value=(x.options||[]).map(o=>[o.name,o.normal,o.esnaf??''].join(';')).join('\n');
+ const optionRows=(x.options||[]).map(o=>({name:String(o.name??''),normal:o.normal,esnaf:o.esnaf??null}));
+ function renderOptionRows(){
+  $('menu-option-list').innerHTML=optionRows.map((o,i)=>
+   '<div class="manager-record" data-menu-option="'+i+'"><div class="row"><b>Seçenek '+(i+1)+'</b><button class="alt" type="button" data-remove-option="'+i+'">Kaldır</button></div>'+
+   '<label>Seçenek adı<input data-option-name="'+i+'" maxlength="120" placeholder="Örn. Tavuklu" value="'+esc(o.name)+'"></label>'+
+   '<div class="row"><label style="flex:1;min-width:120px">Normal fiyat (TL)<input data-option-normal="'+i+'" type="number" min="0" step=".01" inputmode="decimal" placeholder="0" value="'+esc(String(o.normal??''))+'"></label>'+
+   '<label style="flex:1;min-width:120px">Esnaf fiyatı (TL)<input data-option-esnaf="'+i+'" type="number" min="0" step=".01" inputmode="decimal" placeholder="Normal fiyat" value="'+esc(String(o.esnaf??''))+'"></label></div></div>').join('');
+  document.querySelectorAll('[data-remove-option]').forEach(btn=>btn.onclick=()=>{syncOptionRows();optionRows.splice(Number(btn.dataset.removeOption),1);renderOptionRows()});
+ }
+ function syncOptionRows(){
+  optionRows.forEach((o,i)=>{o.name=document.querySelector('[data-option-name="'+i+'"]')?.value??o.name;o.normal=document.querySelector('[data-option-normal="'+i+'"]')?.value??o.normal;o.esnaf=document.querySelector('[data-option-esnaf="'+i+'"]')?.value??o.esnaf});
+ }
+ function updateKind(){show('menu-options-area',$('menu-kind').value!=='plain')}
+ $('menu-kind').onchange=updateKind;updateKind();
+ $('menu-add-option').onclick=()=>{syncOptionRows();optionRows.push({name:'',normal:'',esnaf:null});renderOptionRows();document.querySelector('[data-option-name="'+(optionRows.length-1)+'"]')?.focus()};
+ renderOptionRows();
  $('menu-back').onclick=managerMenu;
  $('menu-save').onclick=async()=>{
   try{
-   const options=$('menu-options').value.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
-    const parts=line.split(';').map(v=>v.trim());
-    if(parts.length!==3||!parts[0]||parts[1]===''||!Number.isFinite(Number(parts[1]))||parts[2]!==''&&!Number.isFinite(Number(parts[2])))throw Error('Seçenekler Ad;Normal;Esnaf biçiminde olmalı');
-    return {name:parts[0],normal:Number(parts[1]),esnaf:parts[2]===''?null:Number(parts[2])};
+   syncOptionRows();
+   const kind=$('menu-kind').value;
+   const options=kind==='plain'?[]:optionRows.map((o,i)=>{
+    const name=String(o.name??'').trim(),normal=String(o.normal??'').trim(),esnaf=String(o.esnaf??'').trim();
+    if(!name||normal===''||!Number.isFinite(Number(normal))||Number(normal)<0||esnaf!==''&&(!Number.isFinite(Number(esnaf))||Number(esnaf)<0))throw Error('Seçenek '+(i+1)+': Ad ve fiyatları kontrol edin.');
+    return {name,normal:Number(normal),esnaf:esnaf===''?null:Number(esnaf)};
    });
    const name=$('menu-name').value.trim(),category=$('menu-cat').value.trim(),n=$('menu-normal').value,e=$('menu-esnaf').value;
-   if(!name||!category||n===''||!Number.isFinite(Number(n))||e!==''&&!Number.isFinite(Number(e)))throw Error('Ürün adı ve fiyatları kontrol edin');
+   if(!name||!category||n===''||!Number.isFinite(Number(n))||Number(n)<0||e!==''&&(!Number.isFinite(Number(e))||Number(e)<0))throw Error('Ürün adı ve fiyatları kontrol edin.');
+   if(kind!=='plain'&&!options.length)throw Error('Bu ürün tipi için en az bir seçenek ekleyin.');
    $('menu-save').disabled=true;
-   const {error}=await db.rpc('manager_save_menu',{p_id:x.id,p_category:category,p_name:name,p_normal:Number(n),p_esnaf:e===''?null:Number(e),p_kind:$('menu-kind').value,p_options:options,p_active:$('menu-active').checked});
+   const {error}=await db.rpc('manager_save_menu',{p_id:x.id,p_category:category,p_name:name,p_normal:Number(n),p_esnaf:e===''?null:Number(e),p_kind:kind,p_options:options,p_active:$('menu-active').checked});
    if(error)throw error;
    if(!await loadMenu())throw Error('Yeni menü okunamadı');
    managerMenu();message('Menü güncellendi.');renderEditor();
