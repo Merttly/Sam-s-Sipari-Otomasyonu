@@ -133,8 +133,15 @@ button svg{flex-shrink:0}
 }
 @media(display-mode:standalone){header{padding-top:max(16px,env(safe-area-inset-top))}}
 @media print{header{position:static}button svg{display:none}}
+
+/* Compact mobile refinements */
+header h1{font-size:19px;letter-spacing:-.025em}header .header-sub{font-weight:450;color:#c1c6b8}header small{font-size:10px;letter-spacing:.11em}header #logout{font-size:13px;padding:9px 14px;min-height:38px}
+#tables{gap:9px}#tables button{min-height:94px;padding:13px 8px;border-radius:16px;font-size:15px;line-height:1.3}#tables button small{display:block;margin-top:7px;font-size:12px}
+#workspace>.panel>.row:first-child h2{font-size:23px;margin:0}#refresh{font-size:13px;padding:9px 12px;min-height:38px}
+#workspace>.panel>.divider+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}#workspace>.panel>.divider+.row button{min-width:0;padding:12px 8px;font-size:12px;min-height:49px}
+@media(max-width:480px){header{padding:14px 16px}header h1{font-size:18px}main{padding:10px}#workspace>.panel{padding:15px}#tables button{min-height:89px}#workspace>.panel>.divider+.row button{font-size:12px}}
 </style></head><body>
-<header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
+<header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
 <div id="msg" class="status">Bağlanılıyor...</div>
 <section id="auth" class="panel hidden">
