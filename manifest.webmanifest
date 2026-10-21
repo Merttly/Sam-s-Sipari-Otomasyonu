@@ -1,6 +1,6 @@
 {
   "name": "Sam’s Sipariş Otomasyonu",
-  "short_name": "Sam’s Sipariş Otomasyonu",
+  "short_name": "Sam’s Sipariş",
   "start_url": "./shared-test.html",
   "scope": "./",
   "display": "standalone",
