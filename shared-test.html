@@ -541,27 +541,43 @@ if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe perso
 state.tables=data;state.role=profile.role;show('report',state.role==='manager');show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 show('pos-bottom-nav',true);for(const id of ['pos-day-end','pos-history','pos-admin','pos-nav-report','pos-nav-admin']){const target={'pos-day-end':'report','pos-history':'audit','pos-admin':'manager-dashboard','pos-nav-report':'report','pos-nav-admin':'manager-dashboard'}[id];$(id).disabled=$(target).classList.contains('hidden')}await refreshOrders();subscribe();
 }
+function tableZone(t){
+ if(t.is_custom)return 'custom';
+ const prefix=String(t.id||'').trim().split(/\s+/)[0].normalize('NFC').toLocaleLowerCase('tr-TR');
+ if(prefix==='dışarı'||prefix==='dış')return 'outside';
+ if(prefix==='içeri'||prefix==='iç')return 'inside';
+ return 'other';
+}
+function displayTableName(id){
+ const name=String(id||'').trim();
+ const pieces=name.match(/^(\S+)(.*)$/);
+ if(!pieces)return name;
+ const prefix=pieces[1].normalize('NFC').toLocaleLowerCase('tr-TR');
+ if(prefix==='dışarı'||prefix==='dış')return 'Dış'+pieces[2];
+ if(prefix==='içeri'||prefix==='iç')return 'İç'+pieces[2];
+ return name;
+}
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity,tariff)').eq('status','open');
 if(error){message('Siparişler okunamadı: '+error.message,true);return}
 const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));const activeOrders=(data||[]).filter(o=>state.tables.some(t=>t.id===o.table_id));$('pos-open-count').textContent=String(activeOrders.length);$('pos-open-total').textContent=money(activeOrders.reduce((sum,o)=>sum+(o.order_items||[]).reduce((n,x)=>n+Number(x.unit_price)*x.quantity,0),0));
 const standardTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="11.2"/><circle cx="16" cy="16" r="8.7" stroke-width="0.75" opacity=".5"/><path d="M9.5 14.8c2.2-2.5 3.9-.5 5.8-2.2 1.4-1.3 2.4-2 4.7-1.5M11.8 21c2.2-1.3 3.7-.6 5.2-2.5 1.2-1.5 2.6-2 4-1.7" stroke-width=".85" opacity=".34"/></svg>';
 const customTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="11" r="4.5"/><path d="M7 27v-2.5a9 9 0 0 1 18 0V27"/></svg>';
 const sections=[
- {key:'outside',title:'Dışarı',tables:state.tables.filter(t=>!t.is_custom&&/^dışarı(?:\s|$)/i.test(t.id))},
- {key:'inside',title:'İçeri',tables:state.tables.filter(t=>!t.is_custom&&/^içeri(?:\s|$)/i.test(t.id))},
- {key:'custom',title:'Özel Masalar',tables:state.tables.filter(t=>t.is_custom)}
+ {key:'outside',title:'Dış',tables:state.tables.filter(t=>tableZone(t)==='outside')},
+ {key:'inside',title:'İç',tables:state.tables.filter(t=>tableZone(t)==='inside')},
+ {key:'custom',title:'Özel Masalar',tables:state.tables.filter(t=>tableZone(t)==='custom')}
 ];
-const otherTables=state.tables.filter(t=>!t.is_custom&&!/^(?:dışarı|içeri)(?:\s|$)/i.test(t.id));
+const otherTables=state.tables.filter(t=>tableZone(t)==='other');
 if(otherTables.length)sections.push({key:'other',title:'Diğer Masalar',tables:otherTables});
 function tableCard(t){
  const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
  const number=(t.id.match(/\d+$/)||[])[0];
  const mark=!t.is_custom&&number?number.padStart(2,'0'):'';
  const icon=t.is_custom?customTableIcon:standardTableIcon;
- return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(t.id+(o?', '+money(sum):', boş'))+'">'+
+ return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(displayTableName(t.id)+(o?', '+money(sum):', boş'))+'">'+
  (mark?'<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>':'')+
  '<span class="table-symbol" aria-hidden="true">'+icon+'</span>'+
- '<span class="table-label">'+esc(t.id)+'</span><small>'+(o?money(sum):'Boş')+'</small></button>';
+ '<span class="table-label">'+esc(displayTableName(t.id))+'</span><small>'+(o?money(sum):'Boş')+'</small></button>';
 }
 $('tables').innerHTML=sections.map(section=>{
  const occupied=section.tables.filter(t=>!!map[t.id]).length;
@@ -582,7 +598,7 @@ state.note=data?.note||'';state.dirty=false;renderEditor();
 }
 async function openTable(id){if(state.dirty&&!confirm('Kaydedilmemiş değişiklikler silinsin mi?'))return;state.selected=id;await readSelected()}
 function renderEditor(){show('editor',!!state.selected);if(!state.selected)return;
-$('table-title').textContent=state.selected;$('revision').textContent='Sürüm '+(state.order?.version||0);
+$('table-title').textContent=displayTableName(state.selected);$('revision').textContent='Sürüm '+(state.order?.version||0);
 show('dirty-notice',state.dirty);
  $('tariff-normal').className=activeTariff==='normal'?'':'alt';$('tariff-esnaf').className=activeTariff==='esnaf'?'':'alt';
 $('categories').innerHTML=[...new Set(menuCatalog.filter(x=>x.active).map(x=>x.category))].map((c,i)=>'<button class="'+(c===category?'':'alt')+'" data-category="'+i+'">'+esc(c)+'</button>').join('');
