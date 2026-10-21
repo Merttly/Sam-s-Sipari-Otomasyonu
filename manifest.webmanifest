@@ -1,1 +1,17 @@
-{"name":"Sam's Sipariş Otomasyonu","short_name":"Sam's","start_url":"./","display":"standalone","background_color":"#f3f1eb","theme_color":"#171714"}
+{
+  "name": "Sam's Sipariş Otomasyonu",
+  "short_name": "Sam's",
+  "start_url": "./shared-test.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#242722",
+  "theme_color": "#242722",
+  "icons": [
+    {
+      "src": "./sams-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
