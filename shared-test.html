@@ -398,6 +398,44 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  #editor #lines .order-line-stepper{grid-template-columns:36px 22px 36px}
  #editor #lines .order-line-step{width:36px;height:38px;min-height:38px}
 }
+
+/* Three quick-scan seating zones; keep all tables on one screen. */
+#tables{display:flex;flex-direction:column;gap:19px}
+#tables .table-section{min-width:0}
+#tables .table-section-header{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ padding:11px 13px;margin:0 0 9px;border-radius:12px;
+ border:1px solid #d8e4d4;background:#e8efdf;color:#32513b;
+}
+#tables .table-section--inside .table-section-header{
+ background:#dae5d5;border-color:#c9d9c6;color:#2b4734;
+}
+#tables .table-section--custom .table-section-header{
+ background:#f0f1e8;border-color:#e2e6d9;color:#435541;
+}
+#tables .table-section--other .table-section-header{background:#ebeee7;color:#435541}
+#tables .table-section-header h3{
+ margin:0;font-size:12px;font-weight:800;line-height:1.3;
+ letter-spacing:.1em;text-transform:uppercase;color:inherit;
+}
+#tables .table-section-count{
+ flex:0 0 auto;padding:4px 9px;border:1px solid #ffffffa8;
+ border-radius:999px;background:#ffffffb8;color:inherit;
+ font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+#tables .table-section-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+}
+#tables .table-section-empty{
+ margin:3px 0 2px;padding:12px 14px;color:#7e8b7c;
+ font-size:12px;border:1px dashed #dce5d7;border-radius:12px;
+}
+@media(max-width:380px){
+ #tables .table-section-header{padding:10px 11px}
+ #tables .table-section-header h3{font-size:11px}
+ #tables .table-section-grid{gap:9px}
+}
+
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -508,7 +546,14 @@ if(error){message('Siparişler okunamadı: '+error.message,true);return}
 const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));const activeOrders=(data||[]).filter(o=>state.tables.some(t=>t.id===o.table_id));$('pos-open-count').textContent=String(activeOrders.length);$('pos-open-total').textContent=money(activeOrders.reduce((sum,o)=>sum+(o.order_items||[]).reduce((n,x)=>n+Number(x.unit_price)*x.quantity,0),0));
 const standardTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="11.2"/><circle cx="16" cy="16" r="8.7" stroke-width="0.75" opacity=".5"/><path d="M9.5 14.8c2.2-2.5 3.9-.5 5.8-2.2 1.4-1.3 2.4-2 4.7-1.5M11.8 21c2.2-1.3 3.7-.6 5.2-2.5 1.2-1.5 2.6-2 4-1.7" stroke-width=".85" opacity=".34"/></svg>';
 const customTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="11" r="4.5"/><path d="M7 27v-2.5a9 9 0 0 1 18 0V27"/></svg>';
-$('tables').innerHTML=state.tables.map(t=>{
+const sections=[
+ {key:'outside',title:'Dışarı',tables:state.tables.filter(t=>!t.is_custom&&/^dışarı(?:\s|$)/i.test(t.id))},
+ {key:'inside',title:'İçeri',tables:state.tables.filter(t=>!t.is_custom&&/^içeri(?:\s|$)/i.test(t.id))},
+ {key:'custom',title:'Özel Masalar',tables:state.tables.filter(t=>t.is_custom)}
+];
+const otherTables=state.tables.filter(t=>!t.is_custom&&!/^(?:dışarı|içeri)(?:\s|$)/i.test(t.id));
+if(otherTables.length)sections.push({key:'other',title:'Diğer Masalar',tables:otherTables});
+function tableCard(t){
  const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
  const number=(t.id.match(/\d+$/)||[])[0];
  const mark=!t.is_custom&&number?number.padStart(2,'0'):'';
@@ -517,6 +562,15 @@ $('tables').innerHTML=state.tables.map(t=>{
  (mark?'<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>':'')+
  '<span class="table-symbol" aria-hidden="true">'+icon+'</span>'+
  '<span class="table-label">'+esc(t.id)+'</span><small>'+(o?money(sum):'Boş')+'</small></button>';
+}
+$('tables').innerHTML=sections.map(section=>{
+ const occupied=section.tables.filter(t=>!!map[t.id]).length;
+ const empty=section.tables.length?'':'<p class="table-section-empty">Henüz özel masa oluşturulmadı.</p>';
+ return '<section class="table-section table-section--'+section.key+'" aria-label="'+section.title+'">'+
+ '<div class="table-section-header"><h3>'+section.title+'</h3>'+
+ '<span class="table-section-count">'+occupied+'/'+section.tables.length+' Dolu</span></div>'+
+ '<div class="table-section-grid">'+section.tables.map(tableCard).join('')+'</div>'+
+ (section.key==='custom'?empty:'')+'</section>';
 }).join('');
 document.querySelectorAll('[data-table]').forEach(b=>b.onclick=()=>openTable(b.dataset.table));
 if(state.selected&&!state.dirty) await readSelected();
