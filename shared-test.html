@@ -405,22 +405,25 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  #editor #lines .order-line-step{width:36px;height:38px;min-height:38px}
 }
 
-/* Three quick-scan seating zones; keep all tables on one screen. */
-#tables{display:flex;flex-direction:column;gap:19px}
+/* Compact, uniform seating-zone separators: table cards remain the focus. */
+#tables{display:flex;flex-direction:column;gap:13px}
 #tables .table-section{min-width:0}
 #tables .table-section-header{
- display:flex;align-items:center;justify-content:space-between;gap:10px;
- padding:11px 13px;margin:0 0 9px;border-radius:12px;
- border:1px solid #d8e4d4;background:#e8efdf;color:#32513b;
+ display:flex;align-items:center;justify-content:space-between;gap:9px;
+ padding:5px 9px;margin:0 0 9px;border-radius:7px;
+ border:0;border-bottom:1px solid #dce6db;
+ background:#f0f4ed;color:#526b57;
+ min-height:25px;
 }
 #tables .table-section-header h3{
- margin:0;font-size:11px;font-weight:800;line-height:1.3;
- letter-spacing:.09em;text-transform:uppercase;color:inherit;
+ margin:0;font-size:10px;font-weight:750;line-height:1.25;
+ letter-spacing:.065em;text-transform:uppercase;color:inherit;
 }
 #tables .table-section-count{
- flex:0 0 auto;padding:4px 9px;border:1px solid #ffffffa8;
- border-radius:999px;background:#ffffffb8;color:inherit;
- font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap;
+ flex:0 0 auto;padding:0;border:0;border-radius:0;
+ background:transparent;color:inherit;
+ font-size:9px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap;
+ opacity:.85;
 }
 #tables .table-section-grid{
  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
@@ -430,8 +433,8 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  font-size:12px;border:1px dashed #dce5d7;border-radius:12px;
 }
 @media(max-width:380px){
- #tables .table-section-header{padding:10px 11px}
- #tables .table-section-header h3{font-size:10px}
+ #tables .table-section-header{padding:5px 8px;min-height:24px}
+ #tables .table-section-header h3{font-size:9px}
  #tables .table-section-grid{gap:9px}
 }
 
@@ -512,10 +515,10 @@ html[data-theme="dark"] #pos-table-heading #custom{
  background:#334a3a;color:#dbeddf;border-color:#4a6850;
 }
 html[data-theme="dark"] #tables .table-section-header{
- background:#314c3a;color:#e1f0dd;border-color:#46634c;
+ background:#2b3c30;color:#b9d0be;border-bottom-color:#49604e;
 }
 html[data-theme="dark"] #tables .table-section-count{
- background:#203528bd;color:#e0f0dd;border-color:#64806a;
+ background:transparent;color:inherit;border:0;
 }
 html[data-theme="dark"] #tables button{
  background:#2a382e;color:#eaf0e7;border-color:#465d4a;
