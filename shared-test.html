@@ -144,6 +144,71 @@ header h1{font-size:19px;letter-spacing:-.025em}header .header-sub{font-weight:4
 
 /* Sam's POS mobile dashboard v1 */
 body{background:#232922}header{border:0;background:#232922;box-shadow:none}main{max-width:850px}#workspace>.panel:first-child{background:transparent;border:0;box-shadow:none;padding:0}#pos-hero{background:linear-gradient(145deg,#34483a,#273b31);border:1px solid #536a50;border-radius:25px;padding:20px;margin:4px 0 18px;overflow:hidden}#pos-hero .pos-kicker{font-size:11px;letter-spacing:.16em;color:#c9d6bb;font-weight:750}#pos-hero h2{font-size:27px;margin:8px 0 4px;color:#fff8e9}#pos-hero p{font-size:13px;color:#d0d9c9;margin:0 0 18px}#pos-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#pos-metrics>div{background:#ffffff13;border:1px solid #ffffff1a;border-radius:15px;padding:13px}#pos-metrics small{font-size:11px;color:#d4dccd}#pos-metrics strong{display:block;font-size:24px;margin-top:3px;color:#fff8e9}#pos-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:23px}#pos-actions button{display:flex;flex-direction:column;gap:8px;min-width:0;background:transparent;border:0;color:#e9ede4;font-size:11px;font-weight:600;padding:6px 0;line-height:1.2}#pos-actions .pos-action-icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#e9eedf;color:#334936;font-size:22px}#pos-actions button:disabled{opacity:.45}#pos-table-heading{display:flex;align-items:center;justify-content:space-between;margin:4px 0 13px}#pos-table-heading h2{font-size:21px;margin:0}#pos-table-heading button{min-height:36px;font-size:12px}#tables button{background:#d7dfc8;color:#2b3c2e;min-height:125px;border-radius:21px;box-shadow:none!important;gap:5px}#tables button.table-open{background:#9cb68e;color:#1e3025}#tables .table-symbol{font-size:25px;color:#46604a}#tables .table-label{font-size:15px}#tables button small{font-size:12px;color:#53664d}#pos-bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:120;display:none;background:#29352c;border-top:1px solid #4c5e4d;padding:9px 10px max(9px,env(safe-area-inset-bottom));grid-template-columns:repeat(4,1fr);gap:5px}#pos-bottom-nav button{display:flex;flex-direction:column;gap:4px;min-height:49px;background:transparent;border:0;color:#c8d1c4;font-size:10px;padding:4px}#pos-bottom-nav button .nav-icon{font-size:21px}#pos-bottom-nav button.active{color:#e2eecb}#pos-bottom-nav button:disabled{opacity:.35}#workspace>.panel:first-child>.divider,#workspace>.panel:first-child>.divider+.row{display:none!important}@media(max-width:600px){main{padding:10px 14px 100px}header{padding:16px 18px}#pos-bottom-nav:not(.hidden){display:grid}#pos-hero{padding:19px}#tables{gap:10px}#tables button{min-height:119px;padding:12px 6px}#pos-actions .pos-action-icon{width:49px;height:49px}#workspace>.panel:first-child{padding:0!important}#editor:not(.hidden){z-index:1500}}@media(min-width:601px){#pos-bottom-nav:not(.hidden){display:grid;max-width:850px;margin:auto;position:sticky;bottom:0;border-radius:18px 18px 0 0}main{padding-bottom:24px}}
+
+/* Sam's POS · Studio refresh v2: compact native-feel design */
+:root{--pos-ink:#172b24;--pos-forest:#24483a;--pos-mint:#e1ebd8;--pos-cream:#f5f6ee}
+body{background:#f5f6ee;color:#203b30;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:#f5f6ee!important;color:#203b30;border:0!important;padding:17px max(20px,calc((100vw - 760px)/2 + 20px)) 12px!important;min-height:72px}
+header h1{font-size:22px;letter-spacing:-.9px;font-weight:820;color:#16392e;line-height:1.1}
+header .header-sub{font-weight:450;color:#416356}header small{display:block;font-size:9px;letter-spacing:.23em;color:#8b998c;margin-top:5px;font-weight:750}
+header #logout{font-size:12px;border:1px solid #dce2d8;color:#365a49;background:#eef2e8;border-radius:12px;min-height:34px;padding:7px 12px}
+main{max-width:760px;padding:4px 18px 104px;color:#203b30}
+#msg.good{background:#e6efdf;color:#44664b;border:1px solid #d8e4d4}
+#workspace:not(.hidden)~#msg{display:none}
+main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
+#workspace>.panel:first-child{margin-bottom:12px}
+#pos-hero{border:0;border-radius:22px;padding:19px 20px 18px;margin:0 0 11px;box-shadow:0 12px 30px #28443120;background:linear-gradient(115deg,#204435 0%,#35634d 100%);position:relative}
+#pos-hero:after{content:"";position:absolute;right:-34px;top:-60px;width:180px;height:180px;border:1px solid #ffffff14;border-radius:50%;pointer-events:none}
+#pos-hero .pos-kicker{font-size:9px;letter-spacing:.19em;color:#c6d9c2;margin-bottom:10px}
+#pos-hero h2{font-size:23px;letter-spacing:-.6px;line-height:1.15;margin:0 0 4px;color:#fffaf0;display:flex;align-items:center;justify-content:space-between}
+#pos-hero p{font-size:11px;color:#d4e4d3;margin:0 0 15px}
+.pos-live{display:inline-flex;align-items:center;gap:6px;border:1px solid #ffffff35;border-radius:40px;padding:6px 8px;font-size:8px;font-weight:800;letter-spacing:.08em;color:#ddf0d4}
+.pos-live i{width:5px;height:5px;background:#b7eb9c;border-radius:50%}
+#pos-metrics{gap:9px}
+#pos-metrics>div{padding:12px 14px;background:#ffffff15;border:1px solid #ffffff24;border-radius:13px}
+#pos-metrics small{font-size:10px;display:block;color:#e2eee0;line-height:1.3}
+#pos-metrics strong{font-size:22px;font-weight:760;letter-spacing:-.5px;margin:5px 0 0}
+#pos-actions{background:#fff;border-radius:18px;padding:12px 5px 9px;gap:0;margin:0 0 20px;box-shadow:0 5px 22px #1c3b2910;border:1px solid #e5ebdf}
+#pos-actions button{font-size:10px;gap:7px;color:#375448;min-height:73px;padding:1px 0 5px;font-weight:680}
+#pos-actions .pos-action-icon{width:43px;height:43px;border-radius:15px;background:#edf4e8;color:#2e5d43;font-size:22px;font-weight:500}
+#pos-actions button:first-child .pos-action-icon{background:#25533f;color:#f8fff1}
+#pos-table-heading{margin:0 2px 12px;align-items:end}
+.pos-overline{font-size:9px;font-weight:800;letter-spacing:.2em;color:#85988b;margin:0 0 3px}
+#pos-table-heading h2{font-size:22px;letter-spacing:-.6px;color:#203b2d}
+#pos-table-heading #refresh{min-height:32px;border-radius:11px;background:#e6eddf!important;color:#3a5c49!important;padding:5px 10px;font-size:11px}
+#pos-table-heading #refresh svg{width:14px;height:14px}
+#tables{gap:10px}
+#tables button{background:#fff;color:#284837;border:1px solid #e4eade;box-shadow:0 3px 12px #193b2210!important;min-height:100px;border-radius:17px;gap:4px;position:relative;padding:12px 6px}
+#tables button.table-open{background:#e1efe0;color:#224a35;border-color:#aacbb0}
+#tables button::before{content:"";position:absolute;right:12px;top:12px;width:6px;height:6px;border-radius:50%;background:#cbd6cb}
+#tables button.table-open::before{background:#4ca168}
+#tables .table-symbol{font-size:20px;color:#567360}
+#tables .table-label{font-size:13px;line-height:1.15;letter-spacing:-.1px}
+#tables button small{font-size:10px;color:#77907e}
+#pos-bottom-nav{background:#fff!important;border-top:1px solid #e4e9df;box-shadow:0 -6px 24px #21382b12;padding:6px 12px max(8px,env(safe-area-inset-bottom));gap:3px}
+#pos-bottom-nav button{color:#819286;font-weight:650;font-size:9px;min-height:49px;gap:3px;border-radius:12px}
+#pos-bottom-nav button .nav-icon{font-size:21px;font-weight:450}
+#pos-bottom-nav button.active{color:#245b3c;background:#edf4e8}
+#editor.panel,#manager-screen .panel{background:#fff;border:1px solid #e3e8de;color:#284132;box-shadow:0 5px 18px #203c2a10}
+#editor h2,#editor h3{color:#274633}
+#editor .alt{background:#e8eee3;color:#315941}
+#editor input,#editor textarea{background:#f7f9f4;color:#263f31;border-color:#d4e1d5}
+#editor #products button{border-radius:13px}
+@media(max-width:600px){
+  body{background:#f5f6ee}
+  header{padding:15px 18px 11px!important;min-height:65px}
+  main{padding:4px 14px 95px}
+  #pos-hero{padding:17px;margin:0 0 10px;border-radius:20px}
+  #pos-hero h2{font-size:22px}
+  #pos-hero p{margin-bottom:13px}
+  #pos-metrics>div{padding:11px 12px}
+  #pos-metrics strong{font-size:21px}
+  #pos-actions{margin-bottom:18px}
+  #tables button{min-height:98px;padding:10px 5px}
+  #pos-actions .pos-action-icon{width:42px;height:42px}
+  #pos-bottom-nav:not(.hidden){display:grid}
+}
+@media(min-width:601px){#pos-bottom-nav{border-radius:18px 18px 0 0;max-width:760px}}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -166,8 +231,8 @@ body{background:#232922}header{border:0;background:#232922;box-shadow:none}main{
 </div>
 </section>
 <section id="workspace" class="hidden">
-<div class="panel"><div id="pos-hero"><div class="pos-kicker">SAM’S COFFEE · SİPARİŞ YÖNETİMİ</div><h2>Günlük operasyon</h2><p>Masaları ve siparişleri tek ekrandan yönet.</p><div id="pos-metrics"><div><small>Açık masa</small><strong id="pos-open-count">0</strong></div><div><small>Aktif sipariş tutarı</small><strong id="pos-open-total">0 TL</strong></div></div></div><div id="pos-actions"><button id="pos-new-order" type="button"><span class="pos-action-icon">＋</span>Yeni sipariş</button><button id="pos-day-end" type="button"><span class="pos-action-icon">▥</span>Gün sonu</button><button id="pos-history" type="button"><span class="pos-action-icon">◷</span>Geçmiş</button><button id="pos-admin" type="button"><span class="pos-action-icon">⚙</span>Yönetim</button></div><div id="pos-table-heading"><h2>Masalar</h2><button id="refresh" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/></svg><span>Yenile</span></button></div></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Özel Masa</span></button><button id="report" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15v-4m5 4V7m5 8v-6"/></svg><span>Gün Sonu</span></button><button id="audit" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18M3 9h18M3 14h12M3 19h8"/></svg><span>İşlem Geçmişi</span></button><button id="staff-admin" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Kullanıcı Yönetimi</span></button><button id="manager-dashboard" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><span>Yönetici Paneli</span></button></div></div>
-<nav id="pos-bottom-nav" class="hidden" aria-label="Uygulama menüsü"><button type="button" id="pos-nav-tables" class="active"><span class="nav-icon">▦</span>Masalar</button><button type="button" id="pos-nav-orders"><span class="nav-icon">☷</span>Siparişler</button><button type="button" id="pos-nav-report"><span class="nav-icon">▥</span>Raporlar</button><button type="button" id="pos-nav-admin"><span class="nav-icon">⚙</span>Yönetim</button></nav><div id="editor" class="panel hidden">
+<div class="panel"><div id="pos-hero"><div class="pos-kicker">SAM’S COFFEE · SİPARİŞ YÖNETİMİ</div><h2>Günün özeti <span class="pos-live"><i></i> CANLI</span></h2><p>Sam’s Coffee · Masa ve sipariş kontrolü</p><div id="pos-metrics"><div><small>Açık masa</small><strong id="pos-open-count">0</strong></div><div><small>Aktif sipariş tutarı</small><strong id="pos-open-total">0 TL</strong></div></div></div><div id="pos-actions"><button id="pos-new-order" type="button"><span class="pos-action-icon">＋</span>Yeni sipariş</button><button id="pos-day-end" type="button"><span class="pos-action-icon">▤</span>Gün sonu</button><button id="pos-history" type="button"><span class="pos-action-icon">◷</span>Geçmiş</button><button id="pos-admin" type="button"><span class="pos-action-icon">⚙</span>Yönetim</button></div><div id="pos-table-heading"><div><div class="pos-overline">SALON YÖNETİMİ</div><h2>Masalar</h2></div><button id="refresh" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6"/><path d="M20 4v7h-7"/></svg><span>Yenile</span></button></div></div><div id="tables" class="grid"></div><div class="divider"></div><div class="row"><button id="custom" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Özel Masa</span></button><button id="report" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5m0 14h16M8 15v-4m5 4V7m5 8v-6"/></svg><span>Gün Sonu</span></button><button id="audit" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18M3 9h18M3 14h12M3 19h8"/></svg><span>İşlem Geçmişi</span></button><button id="staff-admin" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Kullanıcı Yönetimi</span></button><button id="manager-dashboard" class="alt hidden"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><span>Yönetici Paneli</span></button></div></div>
+<nav id="pos-bottom-nav" class="hidden" aria-label="Uygulama menüsü"><button type="button" id="pos-nav-tables" class="active"><span class="nav-icon">⌂</span>Masalar</button><button type="button" id="pos-nav-orders"><span class="nav-icon">▤</span>Siparişler</button><button type="button" id="pos-nav-report"><span class="nav-icon">◷</span>Raporlar</button><button type="button" id="pos-nav-admin"><span class="nav-icon">⚙</span>Yönetim</button></nav><div id="editor" class="panel hidden">
 <div class="row"><button id="back-table" class="alt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>Masalara Dön</span></button><span id="revision" class="muted"></span></div><h2 id="table-title">Masa</h2>
 <p id="dirty-notice" class="note hidden">Kaydedilmemiş değişiklikler var. Hesap/taşıma işleminden önce bu değişiklikler kaydedilecek. Başka cihazdaki güncellemeler birbiri üzerine yazılmaz.</p>
 <h3>Ürün ekle</h3><div class="row" style="margin-bottom:12px"><button id="tariff-normal">Normal Menü</button><button id="tariff-esnaf" class="alt">Esnaf Tarifesi</button></div><div id="categories" class="row" style="justify-content:start;margin-bottom:14px"></div><div id="products" class="grid"></div>
@@ -227,7 +292,7 @@ function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
 if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
+async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('pos-bottom-nav',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
 function authView(signUp=false){show('auth-login',!signUp);show('auth-signup',signUp)}
 async function login(signUp){
  const email=$(signUp?'signup-email':'email').value.trim(),password=$(signUp?'signup-password':'password').value;
@@ -242,9 +307,9 @@ async function login(signUp){
 }
 async function loadTables(){const {data:profile,error:profileError}=await db.from('staff_accounts').select('role,active').eq('user_id',state.user.id).maybeSingle();
 if(profileError){message('Kullanıcı durumu okunamadı: '+profileError.message,true);show('workspace',false);return}
-if(!profile||!profile.active){show('workspace',false);show('auth',false);message('Kaydınız alındı. Yönetici onayı bekleniyor. Onaylandıktan sonra sayfayı yenileyin.');return}
+if(!profile||!profile.active){show('pos-bottom-nav',false);show('workspace',false);show('auth',false);message('Kaydınız alındı. Yönetici onayı bekleniyor. Onaylandıktan sonra sayfayı yenileyin.');return}
 const {data,error}=await db.from('cafe_tables').select('id,is_custom').eq('archived',false).order('id');
-if(error){show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
+if(error){show('pos-bottom-nav',false);show('workspace',false);message('Kafe erişimi henüz verilmemiş olabilir: '+error.message,true);return}
 if(!data?.length){show('workspace',false);message('Hesabınız henüz kafe personeli olarak yetkilendirilmedi. Yönetici onayı gerekli.',true);return}
 state.tables=data;state.role=profile.role;show('report',state.role==='manager');show('audit',state.role==='manager');show('staff-admin',state.role==='manager');show('manager-dashboard',state.role==='manager');show('workspace',true);show('auth',false);message('Ortak sipariş testine bağlısınız · '+(state.role==='manager'?'Yönetici':'Kullanıcı'));
 show('pos-bottom-nav',true);for(const id of ['pos-day-end','pos-history','pos-admin','pos-nav-report','pos-nav-admin']){const target={'pos-day-end':'report','pos-history':'audit','pos-admin':'manager-dashboard','pos-nav-report':'report','pos-nav-admin':'manager-dashboard'}[id];$(id).disabled=$(target).classList.contains('hidden')}await refreshOrders();subscribe();
