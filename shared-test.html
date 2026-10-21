@@ -16,7 +16,7 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #4a4a41;pad
 .hidden{display:none!important}.log-entry{padding:14px 3px;border-bottom:1px solid #484840}.log-entry:last-child{border-bottom:0}.log-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.log-table{font-size:17px;font-weight:750}.log-type{font-size:12px;background:#393c34;border-radius:999px;padding:4px 9px;color:#d9e5d8}.log-detail{margin:8px 0;color:#e2e2d8;font-size:14px;line-height:1.55;white-space:pre-line}.log-meta{color:#aaa99b;font-size:12px}.log-date{margin:22px 0 4px;color:#a9bfac;font-weight:750;letter-spacing:.03em}.log-total{font-weight:700;margin-top:7px}.log-intro{color:#bcbcad;font-size:13px}#summary:not(.hidden){position:fixed;z-index:2000;inset:12px;margin:0;overflow-y:auto;max-width:none;box-shadow:0 0 0 999px #000b;border:2px solid #9cbda2}#summary-body{padding-bottom:22px}.product{font-size:14px;padding:12px 7px}.table-open{background:#81b9a3}#tables button small{color:#1a3024;font-weight:750;opacity:1}.divider{border-top:1px solid #55554a;margin:14px 0}
 #editor:not(.hidden){position:fixed;inset:0;z-index:1500;overflow-y:auto;overscroll-behavior:contain;margin:0;border:0;border-radius:0;max-width:none;padding:18px max(18px,calc((100vw - 760px)/2));background:#1d1d19;height:100vh;height:100dvh}
 #editor #table-title{margin:18px 0 12px}
-#editor .row:first-child{position:sticky;top:-18px;z-index:2;background:#1d1d19;padding:10px 0}
+#editor > .row:first-child{position:sticky;top:-18px;z-index:2;background:#1d1d19;padding:10px 0}
 body:has(#editor:not(.hidden)){overflow:hidden}
 .option-overlay{position:fixed;inset:0;background:#000b;z-index:2600;display:flex;align-items:flex-end;justify-content:center;padding:12px}
 .option-sheet{background:#292923;border:1px solid #626258;border-radius:18px 18px 14px 14px;padding:20px;width:100%;max-width:540px;max-height:85dvh;overflow-y:auto}
@@ -53,7 +53,7 @@ input:focus,textarea:focus,select:focus{border-color:#82916c;box-shadow:0 0 0 3p
 .table-open{background:#a9b995;color:#263224}
 #tables button small{color:inherit}
 #editor:not(.hidden){background:var(--cream);color:var(--ink)}
-#editor .row:first-child{background:var(--cream)}
+#editor > .row:first-child{background:var(--cream)}
 .option-overlay{background:#1d241b99}
 .option-sheet{background:var(--paper);border-color:var(--line);box-shadow:0 -12px 48px #1d241b30}
 .option-choices button{background:#e9eadf;color:var(--ink)}
@@ -86,7 +86,7 @@ input:focus,textarea:focus,select:focus{border-color:#a6b58c;box-shadow:0 0 0 3p
 .log-type{background:#414a38;color:#e8e6dc}.log-detail{color:#f0efe7}.log-meta{color:#c1c6b8}.log-date{color:#b8c7a0}
 #summary:not(.hidden){background:#30352e;border-color:#929e78}
 .table-open{background:#929e78;color:#182018}
-#editor:not(.hidden),#editor .row:first-child{background:#242722;color:#f0efe7}
+#editor:not(.hidden),#editor > .row:first-child{background:#242722;color:#f0efe7}
 .option-sheet{background:#30352e;border-color:#596250}
 .option-choices button{background:#414a38;color:#f0efe7}.option-choices button:hover{background:#566349}.option-choices .cancel{background:#30352e;border-color:#67715f}
 .manager-tabs .active{background:#929e78;color:#182018}
@@ -124,8 +124,8 @@ button svg{flex-shrink:0}
  #workspace>.panel>.row:last-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
  #workspace>.panel>.row:last-child button{width:100%;min-width:0;font-size:12px;padding:11px 8px}
  #editor:not(.hidden){padding:12px 12px max(24px,env(safe-area-inset-bottom))}
- #editor .row:first-child{top:-12px;padding:12px 0}
- #editor .row:first-child button{font-size:13px}
+ #editor > .row:first-child{top:-12px;padding:12px 0}
+ #editor > .row:first-child button{font-size:13px}
  #editor .row{gap:9px}
  #editor .row button{font-size:13px}
  #products button{font-size:13px}
@@ -211,7 +211,7 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
 @media(min-width:601px){#pos-bottom-nav{border-radius:18px 18px 0 0;max-width:760px}}
 
 /* Mobile editor polish — design-only improvements */
-#editor .row:first-child{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:10px;min-width:0;padding:8px 0 10px}
+#editor > .row:first-child{display:flex;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:10px;min-width:0;padding:8px 0 10px}
 #back-table{flex:0 1 auto;min-width:0;min-height:36px;padding:7px 11px;border-radius:10px;font-size:12px;line-height:1.2;white-space:nowrap}
 #back-table svg{width:15px;height:15px}
 #revision{flex:0 0 auto;min-width:0;max-width:42%;font-size:11px;white-space:nowrap;text-align:right;color:#718375}
@@ -234,7 +234,7 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  header small{font-size:9px;margin-top:3px}
  header #logout{flex-shrink:0;min-height:32px;padding:6px 9px}
  #editor:not(.hidden){padding:10px 13px max(24px,env(safe-area-inset-bottom))}
- #editor .row:first-child{top:-10px;padding:8px 0 9px}
+ #editor > .row:first-child{top:-10px;padding:8px 0 9px}
  #editor #table-title{font-size:21px;margin-top:8px}
  #products button.product{min-height:65px;padding:10px}
 }
@@ -355,6 +355,49 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
 #tables button.table-custom .table-watermark{font-size:clamp(59px,17vw,78px)}
 #tables button>.table-symbol,#tables button>.table-label,#tables button>small{position:relative;z-index:1}
 #tables .table-symbol svg{display:block;width:27px;height:27px}
+
+/* Table cards: minimalist round cafe table with four seats. */
+#tables .table-symbol{
+ display:grid;place-items:center;width:40px;height:40px;
+ border-radius:50%;border:1px solid #dee8da;
+ background:#f0f4ec;color:#395c47;
+}
+#tables button.table-open .table-symbol{background:#d5e8d2;border-color:#b8d1b5}
+#tables .table-symbol svg{display:block;width:28px;height:28px}
+
+/* Order rows: no inherited dark/sticky editor toolbar styling. */
+#editor #lines{min-width:0}
+#editor #lines .order-lines{display:block}
+#editor #lines .order-line{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;
+ align-items:center;gap:12px;padding:13px 0;
+ border-bottom:1px solid #dfe7dc;background:transparent;
+ position:static;box-shadow:none;min-width:0;
+}
+#editor #lines .order-line-details{min-width:0}
+#editor #lines .order-line-name{color:#294535;font-size:14px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#editor #lines .order-line-meta{margin-top:5px;color:#7b887d;font-size:11px;line-height:1.3}
+#editor #lines .order-line-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px;min-width:0}
+#editor #lines .order-line-sum{font-size:15px;color:#2c4738;white-space:nowrap;font-weight:750;font-variant-numeric:tabular-nums}
+#editor #lines .order-line-stepper{
+ display:grid;grid-template-columns:40px 26px 40px;align-items:center;
+ gap:3px;padding:3px;border:1px solid #dce6d8;
+ border-radius:13px;background:#edf3e9;
+}
+#editor #lines .order-line-step{
+ display:grid;place-items:center;width:40px;height:40px;min-height:40px;
+ padding:0;margin:0;border-radius:10px;background:#fff!important;
+ color:#315941!important;font-size:21px;font-weight:750;line-height:1;
+ border:1px solid #dae4d5;box-shadow:none;touch-action:manipulation;
+}
+#editor #lines .order-line-qty{text-align:center;font-size:13px;font-weight:750;color:#2c4837;font-variant-numeric:tabular-nums}
+@media(max-width:360px){
+ #editor #lines .order-line{gap:7px}
+ #editor #lines .order-line-name{font-size:13px}
+ #editor #lines .order-line-sum{font-size:14px}
+ #editor #lines .order-line-stepper{grid-template-columns:36px 22px 36px}
+ #editor #lines .order-line-step{width:36px;height:38px;min-height:38px}
+}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -463,15 +506,15 @@ show('pos-bottom-nav',true);for(const id of ['pos-day-end','pos-history','pos-ad
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity,tariff)').eq('status','open');
 if(error){message('Siparişler okunamadı: '+error.message,true);return}
 const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));const activeOrders=(data||[]).filter(o=>state.tables.some(t=>t.id===o.table_id));$('pos-open-count').textContent=String(activeOrders.length);$('pos-open-total').textContent=money(activeOrders.reduce((sum,o)=>sum+(o.order_items||[]).reduce((n,x)=>n+Number(x.unit_price)*x.quantity,0),0));
-const standardTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="24" height="8" rx="2.5"/><path d="M8 17v9M24 17v9M5 26h6M21 26h6"/></svg>';
+const standardTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="16" r="6.5"/><rect x="12" y="2.5" width="8" height="5" rx="2"/><rect x="12" y="24.5" width="8" height="5" rx="2"/><rect x="2.5" y="12" width="5" height="8" rx="2"/><rect x="24.5" y="12" width="5" height="8" rx="2"/></svg>';
 const customTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="11" r="4.5"/><path d="M7 27v-2.5a9 9 0 0 1 18 0V27"/></svg>';
 $('tables').innerHTML=state.tables.map(t=>{
  const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
  const number=(t.id.match(/\d+$/)||[])[0];
- const mark=t.is_custom?(Array.from(t.id.trim())[0]||'✦').toLocaleUpperCase('tr-TR'):(number?number.padStart(2,'0'):'');
+ const mark=!t.is_custom&&number?number.padStart(2,'0'):'';
  const icon=t.is_custom?customTableIcon:standardTableIcon;
  return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(t.id+(o?', '+money(sum):', boş'))+'">'+
- '<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>'+
+ (mark?'<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>':'')+
  '<span class="table-symbol" aria-hidden="true">'+icon+'</span>'+
  '<span class="table-label">'+esc(t.id)+'</span><small>'+(o?money(sum):'Boş')+'</small></button>';
 }).join('');
@@ -494,7 +537,16 @@ if(!menuCatalog.some(x=>x.category===category&&x.active))category=menuCatalog.fi
 const list=menuCatalog.filter(x=>x.category===category&&x.active).map(x=>({c:x.category,n:x.name,p:Number(x.normal_price),b:x.kind==='bowl'?'dynamic':null,ch:x.kind==='options',menu:x}));
 $('products').innerHTML=list.map((x,i)=>'<button class="alt product" data-product="'+i+'"><span class="product-name">'+esc(x.n)+'</span><span class="product-price">'+(x.b?'Seçenekleri gör':money(activeTariff==='esnaf'&&x.menu.esnaf_price!=null?Number(x.menu.esnaf_price):x.p))+'</span></button>').join('');
 document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>pickProduct(list[Number(b.dataset.product)]));
-$('lines').innerHTML=state.lines.length?'<table>'+state.lines.map((x,i)=>'<tr><td>'+esc(x.n)+(x.tariff==='esnaf'?' · Esnaf':'')+'<br><small>'+money(x.p)+' × '+x.q+'</small></td><td><div class="row" style="justify-content:end"><button class="alt" data-minus="'+i+'">−</button><b>'+money(x.p*x.q)+'</b><button class="alt" data-plus="'+i+'">+</button></div></td></tr>').join('')+'</table>':'<p class="muted">Masa boş.</p>';
+$('lines').innerHTML=state.lines.length?'<div class="order-lines">'+state.lines.map((x,i)=>
+ '<div class="order-line"><div class="order-line-details">'+
+ '<div class="order-line-name">'+esc(x.n)+(x.tariff==='esnaf'?' · Esnaf':'')+'</div>'+
+ '<div class="order-line-meta">Birim '+money(x.p)+'</div></div>'+
+ '<div class="order-line-actions"><strong class="order-line-sum">'+money(x.p*x.q)+'</strong>'+
+ '<div class="order-line-stepper" role="group" aria-label="'+esc(x.n)+' adedi">'+
+ '<button type="button" class="order-line-step" data-minus="'+i+'" aria-label="'+esc(x.n)+' azalt">−</button>'+
+ '<span class="order-line-qty">'+x.q+'</span>'+
+ '<button type="button" class="order-line-step" data-plus="'+i+'" aria-label="'+esc(x.n)+' artır">+</button>'+
+ '</div></div></div>').join('')+'</div>':'<p class="muted">Masa boş.</p>';
 document.querySelectorAll('[data-minus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.minus),-1));
 document.querySelectorAll('[data-plus]').forEach(b=>b.onclick=()=>change(Number(b.dataset.plus),1));
 $('note').value=state.note;$('total').textContent=money(state.lines.reduce((s,x)=>s+x.p*x.q,0));
