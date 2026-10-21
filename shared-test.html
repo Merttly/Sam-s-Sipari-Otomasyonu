@@ -358,7 +358,7 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
  color:#3f6a50;opacity:.095;pointer-events:none;user-select:none;
 }
 #tables button.table-open .table-watermark{color:#255b3d;opacity:.12}
-#tables button.table-custom .table-watermark{font-size:clamp(59px,17vw,78px)}
+#tables button.table-custom .table-watermark{font-size:clamp(52px,14vw,68px);letter-spacing:-.085em;right:8px;bottom:-9px}
 #tables button>.table-symbol,#tables button>.table-label,#tables button>small{position:relative;z-index:1}
 #tables .table-symbol svg{display:block;width:27px;height:27px}
 
@@ -838,7 +838,7 @@ if(otherTables.length)sections.push({key:'other',title:'Diğer Masalar',tables:o
 function tableCard(t){
  const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
  const number=(t.id.match(/\d+$/)||[])[0];
- const mark=t.is_custom?'Ö':(number?number.padStart(2,'0'):'');
+ const mark=t.is_custom?'ÖZ':(number?number.padStart(2,'0'):'');
  const icon=t.is_custom?customTableIcon:standardTableIcon;
  return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(displayTableName(t.id)+(o?', '+money(sum):', boş'))+'">'+
  (mark?'<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>':'')+
