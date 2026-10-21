@@ -318,6 +318,31 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
 #tables .table-symbol svg{display:block;width:27px;height:27px}
 #manager-screen .manager-record .row button{min-width:0;max-width:100%;white-space:normal}
 @media(max-width:380px){#pos-table-heading #custom{padding:7px 9px;font-size:11px}}
+
+/* Editor toolbar: align with light app theme; hide internal revision counter */
+#editor:not(.hidden){background:#fff!important;color:#284132!important}
+#editor>.row:first-child{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  flex-wrap:nowrap!important;
+  gap:10px!important;
+  background:#fff!important;
+  color:#284132!important;
+  border-bottom:1px solid #e7ede4;
+  box-shadow:none!important;
+  min-height:52px;
+  padding:8px 0 11px!important;
+}
+#editor #back-table{
+  flex:0 0 auto!important;
+  border:1px solid #dbe5d8!important;
+  background:#e9f0e5!important;
+  color:#315c43!important;
+  box-shadow:none!important;
+  min-height:38px!important;
+}
+#editor #revision{display:none!important}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
