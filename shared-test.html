@@ -343,6 +343,18 @@ main:has(#workspace:not(.hidden)) #msg.good{display:none!important}
   min-height:38px!important;
 }
 #editor #revision{display:none!important}
+
+/* Quiet oversized table numbers; keep real table icons and status legible. */
+#tables button{overflow:hidden;isolation:isolate}
+#tables .table-watermark{
+ position:absolute;right:11px;bottom:-13px;z-index:0;
+ font-size:clamp(59px,17vw,78px);font-weight:850;line-height:1;letter-spacing:-.075em;
+ color:#3f6a50;opacity:.095;pointer-events:none;user-select:none;
+}
+#tables button.table-open .table-watermark{color:#255b3d;opacity:.12}
+#tables button.table-custom .table-watermark{font-size:clamp(59px,17vw,78px)}
+#tables button>.table-symbol,#tables button>.table-label,#tables button>small{position:relative;z-index:1}
+#tables .table-symbol svg{display:block;width:27px;height:27px}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>TEST ORTAMI</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
@@ -451,7 +463,18 @@ show('pos-bottom-nav',true);for(const id of ['pos-day-end','pos-history','pos-ad
 async function refreshOrders(){let {data,error}=await db.from('orders').select('id,table_id,status,version,order_items(id,product_name,unit_price,quantity,tariff)').eq('status','open');
 if(error){message('Siparişler okunamadı: '+error.message,true);return}
 const map=Object.fromEntries((data||[]).map(o=>[o.table_id,o]));const activeOrders=(data||[]).filter(o=>state.tables.some(t=>t.id===o.table_id));$('pos-open-count').textContent=String(activeOrders.length);$('pos-open-total').textContent=money(activeOrders.reduce((sum,o)=>sum+(o.order_items||[]).reduce((n,x)=>n+Number(x.unit_price)*x.quantity,0),0));
-$('tables').innerHTML=state.tables.map(t=>{const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);const icon=t.is_custom?'✦':/^dışarı/i.test(t.id)?'☕':/^içeri/i.test(t.id)?"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"27\" height=\"27\" viewBox=\"0 0 32 32\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"4\" y=\"8\" width=\"24\" height=\"8\" rx=\"2.5\"/><path d=\"M8 16v10M24 16v10M5 26h6M21 26h6\"/></svg>":'▤';return '<button data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+'"><span class="table-symbol" aria-hidden="true">'+icon+'</span><span class="table-label">'+esc(t.id)+'</span><small>'+(o?money(sum):'Boş')+'</small></button>'}).join('');
+const standardTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="24" height="8" rx="2.5"/><path d="M8 17v9M24 17v9M5 26h6M21 26h6"/></svg>';
+const customTableIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="16" cy="11" r="4.5"/><path d="M7 27v-2.5a9 9 0 0 1 18 0V27"/></svg>';
+$('tables').innerHTML=state.tables.map(t=>{
+ const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
+ const number=(t.id.match(/\d+$/)||[])[0];
+ const mark=t.is_custom?(Array.from(t.id.trim())[0]||'✦').toLocaleUpperCase('tr-TR'):(number?number.padStart(2,'0'):'');
+ const icon=t.is_custom?customTableIcon:standardTableIcon;
+ return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(t.id+(o?', '+money(sum):', boş'))+'">'+
+ '<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>'+
+ '<span class="table-symbol" aria-hidden="true">'+icon+'</span>'+
+ '<span class="table-label">'+esc(t.id)+'</span><small>'+(o?money(sum):'Boş')+'</small></button>';
+}).join('');
 document.querySelectorAll('[data-table]').forEach(b=>b.onclick=()=>openTable(b.dataset.table));
 if(state.selected&&!state.dirty) await readSelected();
 }
