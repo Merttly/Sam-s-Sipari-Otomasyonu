@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sam's — Ortak Sipariş Testi</title>
+<title>Sam's | Sipariş Yönetimi</title><meta name="theme-color" content="#f5f0e6">
 <style>
 :root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif;background:#171714;color:#f7f4e9}
 *{box-sizing:border-box}body{margin:0}header{padding:16px;background:#20201d;border-bottom:1px solid #3b3b34;display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -22,6 +22,53 @@ body:has(#editor:not(.hidden)){overflow:hidden}
 .option-sheet{background:#292923;border:1px solid #626258;border-radius:18px 18px 14px 14px;padding:20px;width:100%;max-width:540px;max-height:85dvh;overflow-y:auto}
 .option-sheet h3{margin:0 0 14px}.option-choices{display:grid;gap:10px}.option-choices button{width:100%;text-align:left;background:#3d4038;color:#f8f6ea;padding:16px}.option-choices button:hover{background:#4c594e}.option-choices .cancel{background:#282821;border:1px solid #65655a;text-align:center}
 .manager-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:14px 0}.manager-tabs button{padding:12px 5px;font-size:13px}.manager-tabs .active{background:#a8d4af;color:#17221b}.manager-date-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.manager-date-row label{min-width:0;font-size:13px;color:#d5d4c8}.manager-date-row input,.manager-date-row select{font-size:14px;max-width:100%;margin:4px 0 10px}.manager-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}.manager-stat{background:#34372e;border-radius:12px;padding:15px}.manager-stat b{display:block;margin-top:7px;font-size:19px}.manager-record{padding:12px 2px;border-bottom:1px solid #484840}.manager-record-title{font-weight:700}.manager-record-info{font-size:13px;color:#cacac0;margin-top:4px}.manager-exports{margin-top:18px}.manager-record .log-detail{margin:8px 0}.manager-days{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.manager-days button{font-size:12px}.manager-muted{color:#bab9ad;font-size:13px}.manager-table{width:100%;font-size:13px}.manager-table td,.manager-table th{padding:9px 4px;border-bottom:1px solid #45453e;text-align:left}.manager-table th:last-child,.manager-table td:last-child{text-align:right}@media print{header,#msg,#workspace,#manager-back,.manager-tabs,#manager-date-tools,#manager-log-filters,#manager-exports,#manager-feedback,.manager-days{display:none!important}#manager-screen{display:block!important}main{max-width:none;padding:0}body{background:white!important;color:black!important}.panel{border:0;background:white;color:black}.manager-stat{background:#eee;color:#111}.manager-record-info,.manager-muted{color:#444}.manager-record{break-inside:avoid}}
+
+/* Sam's cream & sage design system — visual-only first pass */
+:root{color-scheme:light;--cream:#f5f0e6;--paper:#fffdf7;--sage:#b5be9a;--sage-dark:#46523e;--ink:#30382d;--muted:#6f7665;--line:#dcdccb;--soft:#e9eadf;background:var(--cream);color:var(--ink)}
+body{background:var(--cream);color:var(--ink);line-height:1.5}
+header{background:var(--paper);border-bottom:1px solid var(--line);box-shadow:0 2px 12px #46523e0b;padding:18px max(18px,calc((100vw - 760px)/2))}
+header h1{color:var(--sage-dark);font-size:21px;letter-spacing:.025em}
+header small,small,.muted{color:var(--muted)}
+main{padding-top:24px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:0 6px 24px #46523e0b;padding:20px}
+h2,h3,h4{color:var(--sage-dark)}
+button{background:var(--sage-dark);color:#fffdf7;border-radius:12px;transition:background .15s ease,transform .15s ease}
+button:hover:not(:disabled){filter:brightness(1.07)}
+button:active:not(:disabled){transform:scale(.99)}
+button.alt{background:var(--soft);color:var(--sage-dark);border:1px solid var(--line)}
+button.warn{background:#c88b71;color:#fff}
+input,textarea,select{background:#fffef9;color:var(--ink);border:1px solid #c9cebd;border-radius:11px;outline-color:var(--sage-dark)}
+input:focus,textarea:focus,select:focus{border-color:#82916c;box-shadow:0 0 0 3px #b5be9a55}
+.note,.log-intro,.manager-muted,.manager-record-info{color:var(--muted)}
+.status{background:#e9eddf;color:var(--sage-dark)}
+.error{background:#f5dfd8;color:#823e35}
+.good{background:#e0ecdd;color:#345c37}
+.divider{border-color:var(--line)}
+.log-entry,.manager-record,.manager-table td,.manager-table th,td{border-color:var(--line)}
+.log-type{background:#e7ebdd;color:var(--sage-dark)}
+.log-detail{color:var(--ink)}
+.log-meta{color:var(--muted)}
+.log-date{color:#65764f}
+#summary:not(.hidden){background:var(--paper);box-shadow:0 0 0 999px #1d241b99;border-color:var(--sage)}
+.table-open{background:#a9b995;color:#263224}
+#tables button small{color:inherit}
+#editor:not(.hidden){background:var(--cream);color:var(--ink)}
+#editor .row:first-child{background:var(--cream)}
+.option-overlay{background:#1d241b99}
+.option-sheet{background:var(--paper);border-color:var(--line);box-shadow:0 -12px 48px #1d241b30}
+.option-choices button{background:#e9eadf;color:var(--ink)}
+.option-choices button:hover{background:#dbe2ce}
+.option-choices .cancel{background:var(--paper);border-color:var(--line)}
+.manager-tabs .active{background:var(--sage-dark);color:#fff}
+.manager-date-row label{color:var(--ink)}
+.manager-stat{background:#edf0e6;border:1px solid var(--line)}
+.manager-record{padding:14px 2px}
+#auth{max-width:490px;margin:32px auto;padding:28px}
+#auth h2{font-size:25px;margin-bottom:18px}
+#auth .row button{flex:1;min-width:150px}
+#menu-option-list .manager-record{background:#f5f6ef;border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+@media(max-width:480px){header{padding:15px 16px}main{padding:14px}.panel{padding:16px;border-radius:16px}#auth{margin:18px auto;padding:20px}button{min-height:43px}}
+@media print{body{background:#fff!important;color:#111!important}.panel{background:#fff!important;color:#111!important;box-shadow:none}.manager-stat{background:#eee!important;color:#111!important}}
 </style></head><body>
 <header><div><h1>SAM'S · Ortak Sipariş</h1><small>TEST · Supabase · Canlıdan bağımsız</small></div><button id="logout" class="alt hidden">Çıkış</button></header>
 <main>
