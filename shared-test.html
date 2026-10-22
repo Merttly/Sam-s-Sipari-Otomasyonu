@@ -1499,7 +1499,7 @@ $('pos-day-end').onclick=()=>posJump('report');$('pos-history').onclick=()=>posJ
 $('pos-nav-tables').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 $('pos-nav-orders').onclick=()=>{$('tables').scrollIntoView({behavior:'smooth',block:'start'})};
 $('pos-nav-report').onclick=()=>posJump('report');$('pos-nav-admin').onclick=()=>posJump('manager-dashboard');
-$('refresh').onclick=()=>loadTables();$('save').onclick=save;
+$('refresh').onclick=()=>loadTables();$('save').onclick=async()=>{if(!await save())return;state.selected=null;state.dirty=false;show('editor',false);window.scrollTo(0,0)};
 $('back-table').onclick=async()=>{if(state.dirty&&!confirm('Kaydedilmemiş değişikliklerden vazgeçilsin mi?'))return;state.selected=null;state.dirty=false;show('editor',false);await refreshOrders();window.scrollTo(0,0)};
 $('custom').onclick=addCustom;$('transfer').onclick=transfer;$('split').onclick=split;
 $('report').onclick=report;$('audit').onclick=audit;$('staff-admin').onclick=staffAdmin;
