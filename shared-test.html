@@ -752,8 +752,63 @@ html[data-theme="dark"] #tables button.table-open .table-watermark{opacity:.075}
   #tables button.table-open small{font-size:14px}
   #tables .table-symbol{margin-bottom:7px}
 }
+
+/* Account panel: header user icon and isolated account modal */
+.header-actions #account-btn{width:37px;height:37px;min-width:37px;min-height:37px;padding:0;display:grid;place-items:center;border:1px solid #dce2d8;background:#eef2e8;color:#365a49;border-radius:11px}
+.header-actions #account-btn svg{display:block}
+@media(max-width:380px){.header-actions #account-btn{width:34px;height:34px;min-width:34px;min-height:34px}}
+.account-overlay{position:fixed;inset:0;z-index:3000;background:#13291b99;display:flex;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}
+.account-card{width:100%;max-width:450px;max-height:calc(100dvh - 36px);overflow-y:auto;border:1px solid #d8e3d5;border-radius:21px;background:#fffefa;color:#2a4838;box-shadow:0 20px 68px #15291f49;padding:24px}
+.account-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:19px}
+.account-eyebrow{font-size:10px;letter-spacing:.17em;color:#8a9b8c;font-weight:750}
+.account-top h2{font-size:23px;line-height:1.25;margin:5px 0 0;color:#274736}
+.account-top #account-close{width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:9px}
+.account-field{display:flex;justify-content:space-between;align-items:baseline;gap:14px;border-bottom:1px solid #e3e9df;padding:12px 0}
+.account-field span{color:#738777;font-size:12px;white-space:nowrap}
+.account-field strong{font-size:13px;font-weight:750;min-width:0;text-align:right;overflow-wrap:anywhere}
+.account-card h3{font-size:16px;margin:23px 0 8px;color:#2c503c}
+.account-card .note{font-size:12px;line-height:1.6;color:#697c6d}
+.account-card #account-reset-request,.account-card #account-password-submit{display:flex;width:100%;margin-top:16px;min-height:47px}
+.account-card #account-recovery-cancel{width:100%;margin-top:10px}
+.account-card input{width:100%;margin:5px 0 14px;min-height:45px;background:#f8faf6;border-color:#cfdfd0;color:#2a4637}
+.account-card label{display:block;font-size:12px;font-weight:700;color:#3f6049}
+.account-feedback{margin:13px 0 0;line-height:1.5;font-size:12px;color:#47694d}
+.account-feedback.is-error{color:#ad423b}
+html[data-theme="dark"] .header-actions #account-btn{background:#35493b;color:#ecf3e8;border-color:#4c6753}
+html[data-theme="dark"] .account-card{background:#27352b;border-color:#4b604f;color:#eaf1e8}
+html[data-theme="dark"] .account-top h2,html[data-theme="dark"] .account-card h3{color:#edf5e8}
+html[data-theme="dark"] .account-field{border-color:#405646}
+html[data-theme="dark"] .account-field span,html[data-theme="dark"] .account-eyebrow{color:#aec0af}
+html[data-theme="dark"] .account-card .note{color:#b0c1b1}
+html[data-theme="dark"] .account-card label{color:#d0e3d2}
+html[data-theme="dark"] .account-card input{background:#1e2a22;border-color:#536b57;color:#ecf4e8}
+html[data-theme="dark"] .account-feedback{color:#c4d9c6}
+html[data-theme="dark"] .account-feedback.is-error{color:#ffb9ae}
 </style></head><body>
-<header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
+<header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button type="button" id="account-btn" class="alt account-btn hidden" aria-label="Kullanıcı paneli" title="Kullanıcı paneli" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.7"/><path d="M4.8 20v-1.1a7.2 7.2 0 0 1 14.4 0V20"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
+<section id="account-dialog" class="account-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+  <div class="account-card">
+   <div class="account-top"><div><span class="account-eyebrow">SAM’S SİPARİŞ</span><h2 id="account-title">Kullanıcı Paneli</h2></div><button type="button" id="account-close" class="alt" aria-label="Kapat">✕</button></div>
+   <div id="account-details">
+    <div class="account-field"><span>Ad Soyad</span><strong id="account-name">—</strong></div>
+    <div class="account-field"><span>E-posta</span><strong id="account-email">—</strong></div>
+    <div class="account-field"><span>Yetki</span><strong id="account-role">—</strong></div>
+    <h3>Şifre değişikliği</h3>
+    <p class="note">Kayıtlı e-posta adresine şifre yenileme bağlantısı gönderilir. Bağlantıyla yeni şifreni belirleyebilirsin; mevcut yetkilerin korunur.</p>
+    <button type="button" id="account-reset-request">Şifre değiştirme e-postası gönder</button>
+    <p id="account-feedback" class="account-feedback" role="status" aria-live="polite"></p>
+   </div>
+   <form id="account-recovery" class="hidden" autocomplete="off">
+    <h3>Yeni şifreni oluştur</h3>
+    <p class="note">E-postadaki bağlantı doğrulandı. Yeni şifreni belirledikten sonra tekrar giriş yapabilirsin.</p>
+    <label>Yeni şifre<input id="account-password" type="password" minlength="8" autocomplete="new-password" required placeholder="En az 8 karakter"></label>
+    <label>Yeni şifre tekrar<input id="account-password-confirm" type="password" minlength="8" autocomplete="new-password" required placeholder="Yeni şifreni tekrar yaz"></label>
+    <button type="submit" id="account-password-submit">Yeni şifreyi kaydet</button>
+    <button type="button" id="account-recovery-cancel" class="alt">Vazgeç ve çıkış yap</button>
+    <p id="account-recovery-feedback" class="account-feedback" role="status" aria-live="polite"></p>
+   </form>
+  </div>
+ </section>
 <main>
 <div id="msg" class="status">Bağlanılıyor...</div>
 <section id="auth" class="panel hidden">
@@ -836,7 +891,7 @@ function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
 if(!window.supabase){message('Supabase kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.',true);return}
 const db=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true}});
-async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('pos-bottom-nav',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
+async function checkAuth(){const {data:{user},error}=await db.auth.getUser();if(error) console.warn(error.message);state.user=user;show('logout',!!user);show('account-btn',!!user);if(!user)closeAccountPanel(true);show('auth',!user);if(user){await loadMenu();await loadTables();}else{show('workspace',false);show('pos-bottom-nav',false);show('manager-screen',false);message('Lütfen personel hesabınızla giriş yapın.')}}
 function authView(signUp=false){show('auth-login',!signUp);show('auth-signup',signUp)}
 async function login(signUp){
  const email=$(signUp?'signup-email':'email').value.trim(),password=$(signUp?'signup-password':'password').value;
@@ -1492,7 +1547,86 @@ state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',sc
 }
 $('tariff-normal').onclick=()=>{activeTariff='normal';renderEditor()};$('tariff-esnaf').onclick=()=>{activeTariff='esnaf';renderEditor()};
 $('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);$('open-signup').onclick=()=>authView(true);$('back-login').onclick=()=>authView(false);
-$('logout').onclick=async()=>{await db.auth.signOut();state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
+
+/* Account security: request an email recovery link without changing staff identity or approval. */
+let verifiedRecovery=false;
+function accountFeedback(id,text,error=false){
+ const el=$(id);el.textContent=text;el.classList.toggle('is-error',!!error);
+}
+function showAccountPanel(recovery=false){
+ if(!recovery&&!state.user)return;
+ show('account-dialog',true);
+ show('account-details',!recovery);
+ show('account-recovery',recovery);
+ $('account-btn').setAttribute('aria-expanded','true');
+ $('account-close').classList.toggle('hidden',recovery);
+ if(recovery){
+  $('account-password').value='';$('account-password-confirm').value='';
+  accountFeedback('account-recovery-feedback','');
+  $('account-password').focus();
+ }else{
+  accountFeedback('account-feedback','');
+  $('account-email').textContent=state.user?.email||'—';
+  $('account-name').textContent=state.user?.user_metadata?.display_name||[state.user?.user_metadata?.first_name,state.user?.user_metadata?.last_name].filter(Boolean).join(' ')||'—';
+  $('account-role').textContent=state.role==='manager'?'Yönetici':state.role==='staff'?'Kullanıcı':state.role==='user'?'Kullanıcı':'Hesap';
+  const ownerId=state.user.id;
+  db.from('staff_accounts').select('display_name,role,active').eq('user_id',ownerId).maybeSingle().then(({data,error})=>{
+   if(error||!data||state.user?.id!==ownerId||$('account-dialog').classList.contains('hidden'))return;
+   $('account-name').textContent=data.display_name||$('account-name').textContent;
+   $('account-role').textContent=data.active?(data.role==='manager'?'Yönetici':'Kullanıcı'):'Onay bekliyor';
+  });
+ }
+}
+function closeAccountPanel(force=false){
+ if(verifiedRecovery&&!force)return;
+ show('account-dialog',false);
+ $('account-btn').setAttribute('aria-expanded','false');
+}
+async function requestPasswordEmail(){
+ if(!state.user?.email||verifiedRecovery)return;
+ const button=$('account-reset-request');
+ button.disabled=true;
+ accountFeedback('account-feedback','Bağlantı isteği gönderiliyor…');
+ try{
+  const {error}=await db.auth.resetPasswordForEmail(state.user.email,{
+   redirectTo:'https://sams-siparis-otomasyonu-test.vercel.app/shared-test.html'
+  });
+  if(error)throw error;
+  accountFeedback('account-feedback','İstek alındı. Kayıtlı e-postanı (gerekirse spam klasörünü) kontrol et. Bağlantı bu test uygulamasına dönmelidir.');
+ }catch(error){
+  accountFeedback('account-feedback','E-posta isteği gönderilemedi: '+error.message,true);
+ }finally{button.disabled=false}
+}
+async function saveRecoveryPassword(event){
+ event.preventDefault();
+ if(!verifiedRecovery){accountFeedback('account-recovery-feedback','E-posta bağlantısını doğrulamadan şifre değiştirilemez.',true);return}
+ const newPass=$('account-password').value,confirmPass=$('account-password-confirm').value;
+ if(newPass.length<8){accountFeedback('account-recovery-feedback','Yeni şifren en az 8 karakter olmalı.',true);return}
+ if(newPass!==confirmPass){accountFeedback('account-recovery-feedback','Şifreler eşleşmiyor.',true);return}
+ const button=$('account-password-submit');button.disabled=true;
+ try{
+  const {error}=await db.auth.updateUser({password:newPass});
+  if(error)throw error;
+  $('account-password').value='';$('account-password-confirm').value='';
+  accountFeedback('account-recovery-feedback','Şifren güncellendi. Giriş ekranına dönülüyor.');
+  await db.auth.signOut();
+  verifiedRecovery=false;closeAccountPanel(true);
+  await checkAuth();
+  message('Şifren güncellendi. Yeni şifrenle tekrar giriş yapabilirsin.');
+ }catch(error){
+  accountFeedback('account-recovery-feedback','Şifre güncellenemedi: '+error.message,true);
+ }finally{button.disabled=false}
+}
+$('account-btn').onclick=()=>showAccountPanel();
+$('account-close').onclick=()=>closeAccountPanel();
+$('account-dialog').addEventListener('click',event=>{if(event.target===$('account-dialog'))closeAccountPanel()});
+$('account-reset-request').onclick=requestPasswordEmail;
+$('account-recovery').addEventListener('submit',saveRecoveryPassword);
+$('account-recovery-cancel').onclick=async()=>{
+ await db.auth.signOut();verifiedRecovery=false;closeAccountPanel(true);await checkAuth();
+};
+document.addEventListener('keydown',event=>{if(event.key==='Escape')closeAccountPanel()});
+$('logout').onclick=async()=>{await db.auth.signOut();verifiedRecovery=false;closeAccountPanel(true);state.selected=null;state.dirty=false;show('editor',false);await checkAuth()};
 function posJump(id){const el=$(id);if(!el||el.classList.contains('hidden'))return;el.click()}
 $('pos-new-order').onclick=()=>{$('tables').scrollIntoView({behavior:'smooth',block:'start'})};
 $('pos-day-end').onclick=()=>posJump('report');$('pos-history').onclick=()=>posJump('audit');$('pos-admin').onclick=()=>posJump('manager-dashboard');
@@ -1510,7 +1644,7 @@ $('manager-export').onclick=managerCSV;$('manager-print').onclick=()=>window.pri
 $('manager-from').value=$('manager-to').value=istDate();$('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
 $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);});
-db.auth.onAuthStateChange((_event,session)=>{if(!session?.user){state.user=null;show('auth',true);show('workspace',false);show('manager-screen',false)}});
+db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'&&session?.user){verifiedRecovery=true;state.user=session.user;show('account-btn',true);show('logout',true);showAccountPanel(true);return}if(!session?.user){state.user=null;show('account-btn',false);show('auth',true);show('workspace',false);show('manager-screen',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
 </script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script><script>
