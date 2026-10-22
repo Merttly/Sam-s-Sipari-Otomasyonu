@@ -784,6 +784,47 @@ html[data-theme="dark"] .account-card label{color:#d0e3d2}
 html[data-theme="dark"] .account-card input{background:#1e2a22;border-color:#536b57;color:#ecf4e8}
 html[data-theme="dark"] .account-feedback{color:#c4d9c6}
 html[data-theme="dark"] .account-feedback.is-error{color:#ffb9ae}
+
+/* Admin menu with collapsible categories, add heading and in-group products */
+#manager-content .menu-admin-title{margin:0;color:#2c4b38;font-size:20px}
+#manager-content .menu-admin-intro{margin:7px 0 15px;line-height:1.55}
+#manager-content .menu-admin-actions,#manager-content .menu-category-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#manager-content .menu-admin-actions{margin:0 0 15px}
+#manager-content .menu-admin-actions button,#manager-content .menu-category-actions button{min-width:0;min-height:43px;font-size:12px;padding:8px}
+#manager-content .menu-add-category{border:1px solid #ccdecf;background:#f3f8f0;border-radius:14px;padding:14px;margin:0 0 15px}
+#manager-content .menu-add-category label{display:block;color:#365841;font-weight:700;font-size:12px;margin-bottom:7px}
+#manager-content .menu-add-category input{box-sizing:border-box;display:block;width:100%;min-height:44px;background:#fff;color:#294837;border:1px solid #ccdecf;margin:0 0 10px;padding:9px 11px}
+#manager-content .menu-groups{display:flex;flex-direction:column;gap:10px}
+#manager-content .menu-group{border:1px solid #dce7d9;border-radius:15px;background:#fcfdfa;overflow:hidden}
+#manager-content .menu-group[open]{background:#fff;border-color:#b9d1bb}
+#manager-content .menu-group summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:14px 13px;min-height:56px;background:#f0f6ed;user-select:none}
+#manager-content .menu-group summary::-webkit-details-marker{display:none}
+#manager-content .menu-group summary::marker{content:""}
+#manager-content .menu-group-heading{font-size:15px;font-weight:800;color:#2e513c;overflow-wrap:anywhere}
+#manager-content .menu-group-count{margin-left:auto;white-space:nowrap;font-size:11px;color:#738b78;font-weight:600}
+#manager-content .menu-chevron{font-size:21px;line-height:1;color:#65806d;transition:transform .18s}
+#manager-content .menu-group[open] .menu-chevron{transform:rotate(180deg)}
+#manager-content .menu-group-body{padding:2px 13px 13px}
+#manager-content .menu-product-row{display:flex;align-items:center;gap:9px;border-bottom:1px solid #e5ece4;padding:12px 0}
+#manager-content .menu-product-row.inactive{opacity:.7}
+#manager-content .menu-product-info{min-width:0;flex:1}
+#manager-content .menu-product-info b{display:inline;font-size:13px;color:#2c4936;overflow-wrap:anywhere}
+#manager-content .menu-product-info small{display:block;font-size:11px;color:#778d7b;line-height:1.45;margin-top:5px}
+#manager-content .menu-product-inactive{font-size:10px;color:#a37642;font-weight:700}
+#manager-content .menu-product-edit{flex:0 0 auto;min-width:70px;width:auto;min-height:36px;margin:0;padding:7px 10px;font-size:12px;border-radius:10px}
+#manager-content .menu-category-product{width:100%;min-height:41px;padding:8px;margin-top:12px;font-size:12px}
+#manager-content .menu-category-empty{text-align:center;color:#819484;font-size:12px;margin:20px 0 10px}
+#manager-content #menu-cat{display:block;box-sizing:border-box;width:100%;min-height:44px;color:#2e4d39;background:#f8fbf7;border:1px solid #d4e1d4;margin-top:6px}
+html[data-theme="dark"] #manager-content .menu-admin-title,html[data-theme="dark"] #manager-content .menu-group-heading,html[data-theme="dark"] #manager-content .menu-product-info b{color:#e5f2e5}
+html[data-theme="dark"] #manager-content .menu-group{background:#28392d;border-color:#45614b}
+html[data-theme="dark"] #manager-content .menu-group[open]{background:#2d4133;border-color:#5f8568}
+html[data-theme="dark"] #manager-content .menu-group summary{background:#344b3a}
+html[data-theme="dark"] #manager-content .menu-group-count,html[data-theme="dark"] #manager-content .menu-product-info small,html[data-theme="dark"] #manager-content .menu-chevron{color:#bad0bb}
+html[data-theme="dark"] #manager-content .menu-product-row{border-color:#4a604e}
+html[data-theme="dark"] #manager-content .menu-add-category{background:#2d4234;border-color:#526f59}
+html[data-theme="dark"] #manager-content .menu-add-category label{color:#d5e4d4}
+html[data-theme="dark"] #manager-content .menu-add-category input,html[data-theme="dark"] #manager-content #menu-cat{background:#203528;color:#e6f3e5;border-color:#536f57}
+@media(max-width:380px){#manager-content .menu-group summary{gap:6px;padding:12px 9px}#manager-content .menu-group-heading{font-size:14px}#manager-content .menu-group-count{font-size:10px}#manager-content .menu-group-body{padding:2px 9px 11px}#manager-content .menu-product-edit{min-width:64px;padding:7px;font-size:11px}}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button type="button" id="account-btn" class="alt account-btn hidden" aria-label="Kullanıcı paneli" title="Kullanıcı paneli" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.7"/><path d="M4.8 20v-1.1a7.2 7.2 0 0 1 14.4 0V20"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
 <section id="account-dialog" class="account-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
@@ -886,6 +927,8 @@ const categories=['Bowls','Tost','Tatlı','Kahve','Mocktail','Sıcak','Soğuk'];
 const esnafPrices={'Sünepe':140,'Kasap':180,'Kavkas':180,'Baba':240,'Baba Yanar':240,'Kasap Yanar':180,'Beyaz Yaka':250,'Americano':125,'Caffe Latte':125,'Aromalı Caffe Latte':125,'Sam\'s Mocktail':150,'Blush':150,'Baba Yanar Mocktail':200,'Yakamoz':150,'Narenciye':150,'Çay':20,'Su':15,'Soda':40,'Limonata':100,'Churchill':80,'Meşrubat':80,'Burn':80};
 const bowlEsnaf=(name,protein)=>({Bonfileli:name==='Fit Bowl'?330:350,Tiftikli:name==='Fit Bowl'?350:370,Köfteli:240,Tavuklu:220})[protein];
 let menuCatalog=[];
+let menuCategories=[];
+let menuExpandedGroup=null;
 const state={user:null,role:null,tables:[],selected:null,order:null,lines:[],note:'',dirty:false,channel:null,loading:false};
 function show(id,v){$(id).classList.toggle('hidden',!v)}
 function message(s,error=false){$('msg').textContent=s;$('msg').className='status '+(error?'error':'good')}
@@ -1444,21 +1487,83 @@ async function loadMenu(){
  if(error){message('Menü yüklenemedi: '+error.message,true);return false}
  menuCatalog=data||[];return true;
 }
-function managerMenu(){
- if(state.role!=='manager')return;
- $('manager-content').innerHTML='<h3>Menü Yönetimi</h3><p class="note">Ürün ve seçenek fiyatlarını buradan düzenleyebilirsiniz. Mevcut açık hesapların fiyatları değişmez. Ürün silinmez; pasife alınabilir.</p>'+
- '<button id="menu-new">+ Yeni Ürün</button>'+
- menuCatalog.map(x=>'<div class="manager-record"><div class="row"><span>'+esc(x.category)+' · '+esc(x.name)+' '+(!x.active?'(Pasif)':'')+'</span><button class="alt" data-menu-id="'+x.id+'">Düzenle</button></div><div class="manager-record-info">Normal '+money(x.normal_price)+' · Esnaf '+(x.esnaf_price===null?'Normal fiyat':money(x.esnaf_price))+'</div></div>').join('');
- $('menu-new').onclick=()=>managerEditMenu(null);
- document.querySelectorAll('[data-menu-id]').forEach(b=>b.onclick=()=>managerEditMenu(menuCatalog.find(x=>x.id===Number(b.dataset.menuId))));
+async function loadMenuCategories(){
+ const {data,error}=await db.from('menu_categories').select('id,name,sort_order').order('sort_order',{ascending:true}).order('id',{ascending:true});
+ if(error){managerFeedback('Ana başlıklar yüklenemedi: '+error.message,true);return false}
+ menuCategories=data||[];return true;
 }
-function managerEditMenu(item){
+async function managerMenu(){
  if(state.role!=='manager')return;
- const x=item||{id:null,category:'Kahve',name:'',normal_price:0,esnaf_price:null,kind:'plain',options:[],active:true};
+ const host=$('manager-content');
+ host.innerHTML='<h3>Menü Yönetimi</h3><p class="note">Ana başlıklar yükleniyor…</p>';
+ const loaded=await loadMenuCategories();
+ if(manager.tab!=='menu'||state.role!=='manager')return;
+ const names=[...new Set([...menuCategories.map(c=>c.name),...menuCatalog.map(p=>p.category)])];
+ if(!menuExpandedGroup||!names.includes(menuExpandedGroup))menuExpandedGroup=names[0]||null;
+ host.innerHTML=
+ '<h3 class="menu-admin-title">Menü Yönetimi</h3>'+
+ '<p class="note menu-admin-intro">'+menuCatalog.length+' ürün · '+names.length+' ana başlık. Başlıklara dokunarak ürünleri düzenleyebilirsiniz.</p>'+
+ '<div class="menu-admin-actions"><button type="button" id="menu-new">+ Yeni Ürün</button><button class="alt" type="button" id="menu-new-category"'+(loaded?'':' disabled')+'>+ Ana Başlık</button></div>'+
+ '<form id="menu-category-form" class="menu-add-category hidden">'+
+ '<label for="menu-category-name">Yeni ana başlık adı</label><input id="menu-category-name" type="text" maxlength="50" required autocomplete="off" placeholder="Örn. Sandviç">'+
+ '<div class="menu-category-actions"><button id="menu-category-submit" type="submit">Başlığı Ekle</button><button id="menu-category-cancel" type="button" class="alt">Vazgeç</button></div>'+
+ '<p id="menu-category-status" class="note" role="status"></p></form>'+
+ '<div class="menu-groups">'+names.map((name,i)=>{
+  const products=menuCatalog.filter(p=>p.category===name);
+  const inactive=products.filter(p=>!p.active).length;
+  return '<details class="menu-group" data-menu-group="'+i+'"'+(menuExpandedGroup===name?' open':'')+'>'+
+   '<summary><span class="menu-group-heading">'+esc(name)+'</span><span class="menu-group-count">'+products.length+' ürün'+(inactive?' · '+inactive+' pasif':'')+'</span><span class="menu-chevron" aria-hidden="true">⌄</span></summary>'+
+   '<div class="menu-group-body">'+
+   (products.length?products.map(p=>
+    '<div class="menu-product-row'+(p.active?'':' inactive')+'"><div class="menu-product-info"><b>'+esc(p.name)+'</b>'+
+    (!p.active?' <span class="menu-product-inactive">Pasif</span>':'')+
+    '<small>Normal '+money(p.normal_price)+' · Esnaf '+(p.esnaf_price===null?'Normal fiyat':money(p.esnaf_price))+'</small>'+
+    '</div><button class="alt menu-product-edit" type="button" data-menu-id="'+p.id+'">Düzenle</button></div>'
+   ).join(''):'<p class="menu-category-empty">Bu başlıkta henüz ürün yok.</p>')+
+   '<button type="button" class="alt menu-category-product" data-menu-add="'+i+'">+ Bu Başlığa Ürün Ekle</button>'+
+   '</div></details>';
+ }).join('')+'</div>'+
+ (loaded?'':'<p class="note">Ana başlıklar okunamadı; yeni başlık ekleme geçici olarak kapalı.</p>');
+ $('menu-new').onclick=()=>managerEditMenu(null);
+ $('menu-new-category').onclick=()=>{
+  show('menu-category-form',true);
+  $('menu-category-name').value='';
+  $('menu-category-status').textContent='';
+  $('menu-category-name').focus();
+ };
+ $('menu-category-cancel').onclick=()=>show('menu-category-form',false);
+ $('menu-category-form').onsubmit=async event=>{
+  event.preventDefault();if(!loaded||state.role!=='manager')return;
+  const name=$('menu-category-name').value.trim().replace(/\s+/g,' ');
+  const status=$('menu-category-status'),button=$('menu-category-submit');
+  if(name.length<1||name.length>50){status.textContent='Başlık 1–50 karakter olmalı.';return}
+  if(names.some(c=>c.toLocaleLowerCase('tr-TR')===name.toLocaleLowerCase('tr-TR'))){status.textContent='Bu başlık zaten mevcut.';return}
+  button.disabled=true;status.textContent='Başlık ekleniyor…';
+  try{
+   const {error}=await db.from('menu_categories').insert({name});
+   if(error)throw error;
+   menuExpandedGroup=name;
+   await managerMenu();
+   message('Yeni ana başlık oluşturuldu: '+name);
+  }catch(err){
+   if($('menu-category-status'))$('menu-category-status').textContent=err.code==='23505'?'Bu başlık zaten mevcut.':'Başlık eklenemedi: '+err.message;
+   if($('menu-category-submit'))$('menu-category-submit').disabled=false;
+  }
+ };
+ document.querySelectorAll('[data-menu-group]').forEach(el=>el.addEventListener('toggle',()=>{
+  if(!el.open)return;
+  menuExpandedGroup=names[Number(el.dataset.menuGroup)];
+  document.querySelectorAll('[data-menu-group]').forEach(other=>{if(other!==el)other.open=false});
+ }));
+ document.querySelectorAll('[data-menu-id]').forEach(el=>el.onclick=()=>managerEditMenu(menuCatalog.find(p=>p.id===Number(el.dataset.menuId))));
+ document.querySelectorAll('[data-menu-add]').forEach(el=>el.onclick=()=>managerEditMenu(null,names[Number(el.dataset.menuAdd)]));
+}
+function managerEditMenu(item,presetCategory){
+ if(state.role!=='manager')return;
+ const x=item||{id:null,category:presetCategory||menuExpandedGroup||menuCategories[0]?.name||'Kahve',name:'',normal_price:0,esnaf_price:null,kind:'plain',options:[],active:true};
  const panel=$('manager-content');
  panel.innerHTML='<button class="alt" id="menu-back">← Menü listesi</button><h3>'+(item?'Ürün Düzenle':'Yeni Ürün')+'</h3>'+
- '<label>Kategori<input id="menu-cat" list="menu-categories" maxlength="50" value="'+esc(x.category)+'"></label>'+
- '<datalist id="menu-categories">'+[...new Set(menuCatalog.map(p=>p.category))].map(c=>'<option value="'+esc(c)+'"></option>').join('')+'</datalist>'+
+ '<label>Ana başlık<select id="menu-cat" required>'+[...new Set([...menuCategories.map(c=>c.name),...menuCatalog.map(p=>p.category),x.category])].map(c=>'<option value="'+esc(c)+'"'+(c===x.category?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>'+
  '<label>Ürün adı<input id="menu-name" maxlength="120" value="'+esc(x.name)+'"></label>'+
  '<div class="row"><label style="flex:1;min-width:130px">Normal fiyat (TL)<input id="menu-normal" type="number" min="0" step=".01" inputmode="decimal" value="'+x.normal_price+'"></label>'+
  '<label style="flex:1;min-width:130px">Esnaf fiyatı (TL)<input id="menu-esnaf" type="number" min="0" step=".01" inputmode="decimal" placeholder="Normal fiyat kullanılsın" value="'+(x.esnaf_price??'')+'"></label></div>'+
@@ -1500,7 +1605,7 @@ function managerEditMenu(item){
    const {error}=await db.rpc('manager_save_menu',{p_id:x.id,p_category:category,p_name:name,p_normal:Number(n),p_esnaf:e===''?null:Number(e),p_kind:kind,p_options:options,p_active:$('menu-active').checked});
    if(error)throw error;
    if(!await loadMenu())throw Error('Yeni menü okunamadı');
-   managerMenu();message('Menü güncellendi.');renderEditor();
+   menuExpandedGroup=category;await managerMenu();message('Menü güncellendi.');renderEditor();
   }catch(err){$('menu-status').textContent='Kaydedilemedi: '+err.message;$('menu-save').disabled=false}
  };
 }
