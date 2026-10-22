@@ -869,6 +869,27 @@ html[data-theme="dark"] #manager-screen>.panel>.manager-subtitle{color:#bccfbb}
 #manager-screen{--manager-feedback-normal:#405846;--manager-feedback-error:#a93b2f}
 #manager-screen #manager-feedback.date-range{position:relative;top:10px}
 html[data-theme="dark"] #manager-screen{--manager-feedback-normal:#bfceb9;--manager-feedback-error:#ffb4a8}
+
+/* Same-product grouping: daily report and end-of-day breakdown. */
+#summary-body .sold-product-entry{padding:10px 0;border-bottom:1px solid #51604f}
+#summary-body .sold-product-entry:last-of-type{border-bottom:0}
+#summary-body .sold-product-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;color:#f2f5ef}
+#summary-body .sold-product-line strong{color:#fffdf5}
+.sold-variant-list{margin:5px 0 0 10px;padding-left:10px;border-left:2px solid #839b80;font-size:12px;line-height:1.6}
+.sold-variant{color:#bcd0bf;overflow-wrap:anywhere}
+#manager-screen #manager-day-detail>h3,#manager-screen #manager-day-detail>h4{color:#294634}
+#manager-screen #manager-day-detail .sold-product-row.with-variants td{border-bottom:0;padding-bottom:2px}
+#manager-screen #manager-day-detail .sold-detail-row td{padding:0 8px 12px;text-align:left!important;border-bottom:1px solid #d9e5d7}
+#manager-screen #manager-day-detail .sold-detail-row .sold-variant-list{margin:2px 0 0 0;border-color:#b6cab5}
+#manager-screen #manager-day-detail .sold-detail-row .sold-variant{color:#59715e}
+html[data-theme="dark"] #manager-screen #manager-day-detail>h3,
+html[data-theme="dark"] #manager-screen #manager-day-detail>h4{color:#edf4e9}
+html[data-theme="dark"] #manager-screen #manager-day-detail .sold-detail-row td{border-color:#48604c}
+html[data-theme="dark"] #manager-screen #manager-day-detail .sold-detail-row .sold-variant{color:#bfd0bf}
+@media print{
+ #manager-screen #manager-day-detail>h3,#manager-screen #manager-day-detail>h4{color:#111!important}
+ #manager-screen #manager-day-detail .sold-detail-row .sold-variant{color:#444!important}
+}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button type="button" id="account-btn" class="alt account-btn hidden" aria-label="Kullanıcı paneli" title="Kullanıcı paneli" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.7"/><path d="M4.8 20v-1.1a7.2 7.2 0 0 1 14.4 0V20"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
 <section id="account-dialog" class="account-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
@@ -1212,13 +1233,46 @@ async function split(){
  wrap.querySelector('#split-cash').onclick=()=>take('Nakit');
  wrap.querySelector('#split-card').onclick=()=>take('Kart');
 }
+
+function groupSoldProducts(lines){
+ const products=new Map();
+ for(const i of lines||[]){
+  const name=String(i.product_name||'').trim()||'Ürün';
+  const quantity=Number(i.quantity),price=Number(i.unit_price);
+  if(!Number.isFinite(quantity)||quantity<=0||!Number.isFinite(price))continue;
+  const tariff=i.tariff==='esnaf'?'esnaf':'normal';
+  let p=products.get(name);
+  if(!p){p={name,q:0,amount:0,variants:new Map()};products.set(name,p)}
+  p.q+=quantity;p.amount+=quantity*price;
+  const key=tariff+'|'+price;
+  let v=p.variants.get(key);
+  if(!v){v={tariff,price,q:0,amount:0};p.variants.set(key,v)}
+  v.q+=quantity;v.amount+=quantity*price;
+ }
+ return [...products.values()].map(p=>({
+  name:p.name,q:p.q,amount:p.amount,
+  variants:[...p.variants.values()].sort((a,b)=>a.tariff===b.tariff?b.price-a.price:a.tariff==='normal'?-1:1)
+ })).sort((a,b)=>b.q-a.q||a.name.localeCompare(b.name,'tr'));
+}
+function renderSoldVariants(product){
+ if(product.variants.length<2)return '';
+ return '<div class="sold-variant-list">'+product.variants.map(v=>
+  '<div class="sold-variant">'+(v.tariff==='esnaf'?'Esnaf':'Normal')+
+  ' · '+v.q+' adet × '+money(v.price)+' = '+money(v.amount)+'</div>'
+ ).join('')+'</div>';
+}
+
 async function report(){
  if(state.role!=='manager'){message('Gün sonu raporu yalnızca yöneticilere açık.',true);return}
  const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity,tariff)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
  if(error){$('summary-title').textContent='Gün Sonu · Hata';$('summary-body').textContent=error.message;show('summary',true);message('Rapor okunamadı: '+error.message,true);return}
- const sums={Nakit:0,Kart:0},products={};(data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount);(p.payment_items||[]).forEach(i=>{const key=i.product_name+' / '+i.unit_price;const q=products[key]||{n:i.product_name,p:Number(i.unit_price),q:0};q.q+=i.quantity;products[key]=q})});
+ const sums={Nakit:0,Kart:0};
+ (data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount)});
+ const products=groupSoldProducts((data||[]).flatMap(p=>p.payment_items||[]));
  $('summary-title').textContent='Gün Sonu · '+new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
- $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+Object.values(products).map(x=>'<p>'+esc(x.n)+' · '+x.q+' adet · '+money(x.p*x.q)+'</p>').join('')+'<p class="note">Bu rapor güncel tahsilat kayıtlarından hesaplanır. Geçmiş kayıtlar korunur; ayrıca gün kapatma işlemi gerekmez.</p>';
+ $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+
+ (products.length?products.map(p=>'<div class="sold-product-entry"><div class="sold-product-line"><span>'+esc(p.name)+' · '+p.q+' adet</span><strong>'+money(p.amount)+'</strong></div>'+renderSoldVariants(p)+'</div>').join(''):'<p class="note">Bugün henüz satış kaydı yok.</p>')+
+ '<p class="note">Bu rapor güncel tahsilat kayıtlarından hesaplanır. Geçmiş kayıtlar korunur; ayrıca gün kapatma işlemi gerekmez.</p>';
  show('summary',true);
 }
 async function staffAdmin(){
@@ -1483,12 +1537,12 @@ function managerRenderReports(){
 function managerDayDetail(day){
  const payments=manager.payments.filter(p=>istDate(new Date(p.created_at))===day);
  manager.selectedDay=day;
- const totals=new Map();
- payments.filter(p=>correctedAmount(p)>0).forEach(p=>selectedTariffItems(p).forEach(i=>{const key=i.product_name+'|'+i.unit_price;
- const x=totals.get(key)||{name:i.product_name,q:0,amount:0};x.q+=Number(i.quantity);x.amount+=Number(i.unit_price)*Number(i.quantity);totals.set(key,x)}));
- const items=[...totals.values()].sort((a,b)=>b.q-a.q);
+ const items=groupSoldProducts(payments.filter(p=>correctedAmount(p)>0).flatMap(p=>selectedTariffItems(p)));
  $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+'<div class="manager-stats"><div class="manager-stat"><span>Filtrelenen Tahsilat</span><b>'+money(payments.reduce((v,p)=>v+filteredPaymentAmount(p),0))+'</b></div></div><h4>Satılan ürünler</h4>'+
- (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>').join('')+'</tbody></table>':'<p>Ürün kaydı yok.</p>');
+ (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+
+ items.map(i=>'<tr class="sold-product-row'+(i.variants.length>1?' with-variants':'')+'"><td>'+esc(i.name)+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>'+
+ (i.variants.length>1?'<tr class="sold-detail-row"><td colspan="3">'+renderSoldVariants(i)+'</td></tr>':'')).join('')+
+ '</tbody></table>':'<p>Ürün kaydı yok.</p>');
  manager.exportName='sams_gunluk_'+day;
  manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),effectiveMethod(x),filteredPaymentAmount(x)])];
 }
