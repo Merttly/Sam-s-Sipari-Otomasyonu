@@ -938,6 +938,7 @@ html[data-theme="dark"] #tables .custom-table-actions button[data-custom-archive
 <label>E-posta<input id="email" type="email" autocomplete="username" placeholder="ornek@eposta.com"></label>
 <label>Şifre<input id="password" type="password" autocomplete="current-password" placeholder="Şifreniz"></label>
 <div class="row"><button id="signin">Giriş yap</button><button id="open-signup" class="alt">Yeni kullanıcı oluştur</button></div>
+<button type="button" id="forgot-password" class="alt" style="margin-top:12px">Şifremi unuttum</button>
 </div>
 <div id="auth-signup" class="hidden">
 <h2>Yeni kullanıcı oluştur</h2>
@@ -1022,7 +1023,7 @@ async function login(signUp){
  const firstName=signUp?$('first-name').value.trim():'',lastName=signUp?$('last-name').value.trim():'';
  if(signUp&&(!firstName||!lastName)){message('Yeni kayıt için ad ve soyad gerekli.',true);return}
  const displayName=(firstName+' '+lastName).trim();
- const {data,error}=signUp?await db.auth.signUp({email,password,options:{data:{display_name:displayName,first_name:firstName,last_name:lastName}}}):await db.auth.signInWithPassword({email,password});
+ const {data,error}=signUp?await db.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+'/shared-test.html',data:{display_name:displayName,first_name:firstName,last_name:lastName}}}):await db.auth.signInWithPassword({email,password});
  if(error){message(error.message,true);return}
  if(signUp){authView(false);$('email').value=email;$('password').value='';$('signup-password').value='';message('Başvuru oluşturuldu. E-posta doğrulamanızdan sonra yönetici onayını bekleyin; otomatik masa erişimi verilmez.');}
  else {message('Giriş başarılı.');await checkAuth()}
@@ -1843,6 +1844,18 @@ state.channel=db.channel('cafe-shared-test').on('postgres_changes',{event:'*',sc
 }
 $('tariff-normal').onclick=()=>{activeTariff='normal';renderEditor()};$('tariff-esnaf').onclick=()=>{activeTariff='esnaf';renderEditor()};
 $('signin').onclick=()=>login(false);$('signup').onclick=()=>login(true);$('open-signup').onclick=()=>authView(true);$('back-login').onclick=()=>authView(false);
+$('forgot-password').onclick=async()=>{
+ const email=$('email').value.trim();
+ if(!email||!$('email').checkValidity()){message('Şifre yenileme bağlantısı için geçerli e-posta adresinizi yazın.',true);return}
+ const button=$('forgot-password');button.disabled=true;
+ try{
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/shared-test.html'});
+  if(error)throw error;
+  message('Şifre yenileme bağlantısı istendi. E-postanızı (spam klasörü dahil) kontrol edin.');
+ }catch(error){message('Şifre yenileme isteği gönderilemedi: '+error.message,true)}
+ finally{button.disabled=false}
+};
+
 
 /* Account security: request an email recovery link without changing staff identity or approval. */
 let verifiedRecovery=false;
@@ -1943,7 +1956,7 @@ $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=t
 db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'&&session?.user){verifiedRecovery=true;state.user=session.user;show('account-btn',true);show('logout',true);showAccountPanel(true);return}if(!session?.user){state.user=null;show('account-btn',false);show('auth',true);show('workspace',false);show('manager-screen',false)}});
 checkAuth();setInterval(()=>{if(state.user)refreshOrders()},6000);
 })();
-</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}</script><script>
+</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));}</script><script>
 (function(){
  const button=document.getElementById('theme-toggle');
  if(!button)return;
