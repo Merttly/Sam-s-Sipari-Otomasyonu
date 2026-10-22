@@ -1173,8 +1173,8 @@ async function report(){
  const {data,error}=await db.from('payments').select('amount,payment_method,created_at,payment_items(product_name,unit_price,quantity,tariff)').gte('created_at',new Date(new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Istanbul'})+'T00:00:00+03:00').toISOString()).order('created_at',{ascending:false});
  if(error){$('summary-title').textContent='Gün Sonu · Hata';$('summary-body').textContent=error.message;show('summary',true);message('Rapor okunamadı: '+error.message,true);return}
  const sums={Nakit:0,Kart:0},products={};(data||[]).forEach(p=>{sums[p.payment_method]=(sums[p.payment_method]||0)+Number(p.amount);(p.payment_items||[]).forEach(i=>{const key=i.product_name+' / '+i.unit_price;const q=products[key]||{n:i.product_name,p:Number(i.unit_price),q:0};q.q+=i.quantity;products[key]=q})});
- $('summary-title').textContent='Gün Sonu · Test';
- $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+Object.values(products).map(x=>'<p>'+esc(x.n)+' · '+x.q+' adet · '+money(x.p*x.q)+'</p>').join('')+'<p class="note">Günü kapatma / geçmişi silme bu testte kapalı; kayıtlar korunuyor.</p>';
+ $('summary-title').textContent='Gün Sonu · '+new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
+ $('summary-body').innerHTML='<p>Toplam: <b>'+money(Object.values(sums).reduce((a,b)=>a+b,0))+'</b></p><p>Nakit: '+money(sums.Nakit)+' · Kart: '+money(sums.Kart)+'</p><h3>Satılan Ürünler</h3>'+Object.values(products).map(x=>'<p>'+esc(x.n)+' · '+x.q+' adet · '+money(x.p*x.q)+'</p>').join('')+'<p class="note">Bu rapor güncel tahsilat kayıtlarından hesaplanır. Geçmiş kayıtlar korunur; ayrıca gün kapatma işlemi gerekmez.</p>';
  show('summary',true);
 }
 async function staffAdmin(){
@@ -1697,7 +1697,7 @@ async function requestPasswordEmail(){
    redirectTo:window.location.origin+'/shared-test.html'
   });
   if(error)throw error;
-  accountFeedback('account-feedback','İstek alındı. Kayıtlı e-postanı (gerekirse spam klasörünü) kontrol et. Bağlantı bu test uygulamasına dönmelidir.');
+  accountFeedback('account-feedback','İstek alındı. Kayıtlı e-postanı (gerekirse spam klasörünü) kontrol et. Bağlantı Sam’s Sipariş uygulamasına dönecektir.');
  }catch(error){
   accountFeedback('account-feedback','E-posta isteği gönderilemedi: '+error.message,true);
  }finally{button.disabled=false}
