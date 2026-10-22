@@ -909,27 +909,72 @@ html[data-theme="dark"] #manager-screen #manager-day-detail .sold-detail-row .so
 html[data-theme="dark"] #tables .custom-table-actions button{background:#354b3a;color:#e2eddf;border-color:#516b56}
 html[data-theme="dark"] #tables .custom-table-actions button[data-custom-archive]{background:#503a35;color:#ffded5;border-color:#77554e}
 
-/* Bottom navigation: 26px matching stroke icons and identical icon/label baselines. */
-#pos-bottom-nav button{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:7px;min-height:75px;padding:9px 2px 8px;min-width:0;
+/* 2026-10-22: Compact navigation with identical 2-row grid for all four tabs.
+   A grid (instead of flex) avoids old #pos-nav-admin's higher-specificity gap rule. */
+#pos-bottom-nav{
+  padding:4px 10px max(5px,env(safe-area-inset-bottom));
+  gap:3px;
+}
+#pos-bottom-nav button,
+#pos-bottom-nav #pos-nav-admin{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:26px 18px;
+  align-content:center;
+  justify-items:center;
+  row-gap:4px;
+  column-gap:0;
+  min-height:60px;
+  width:100%;
+  min-width:0;
+  padding:5px 2px;
+  border-radius:12px;
 }
 #pos-bottom-nav button .nav-icon,
 #pos-bottom-nav #pos-nav-admin .nav-icon{
-  display:grid;place-items:center;flex:0 0 30px;
-  width:30px;height:30px;line-height:1;font-size:0;margin:0;
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  align-self:center;
+  justify-self:center;
+  width:26px;
+  height:26px;
+  min-width:26px;
+  min-height:26px;
+  margin:0;
+  padding:0;
+  font-size:0;
+  line-height:1;
 }
-#pos-bottom-nav .nav-icon svg,
+#pos-bottom-nav button .nav-icon svg,
 #pos-bottom-nav #pos-nav-admin .nav-icon svg{
-  display:block;flex:none;width:26px;height:26px;
-  stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+  display:block;
+  width:24px;
+  height:24px;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 #pos-bottom-nav button .nav-label,
 #pos-bottom-nav #pos-nav-admin .nav-label{
-  display:flex;align-items:center;justify-content:center;
-  min-height:23px;width:100%;max-width:100%;
-  font-size:clamp(8px,2.4vw,10px);line-height:1.15;font-weight:650;
-  text-align:center;white-space:nowrap;letter-spacing:-.015em;
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  width:100%;
+  max-width:100%;
+  min-height:18px;
+  height:18px;
+  margin:0;
+  padding:0;
+  font-size:clamp(8px,2.25vw,9.5px);
+  font-weight:650;
+  line-height:1;
+  letter-spacing:-.02em;
+  text-align:center;
+  white-space:nowrap;
+  overflow:visible;
 }
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button type="button" id="account-btn" class="alt account-btn hidden" aria-label="Kullanıcı paneli" title="Kullanıcı paneli" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.7"/><path d="M4.8 20v-1.1a7.2 7.2 0 0 1 14.4 0V20"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
