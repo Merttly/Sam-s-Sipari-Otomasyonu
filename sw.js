@@ -1,27 +1,11 @@
-const C="sams-v012-fixed",A=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest"];
-
-self.addEventListener("install",e=>{
-  self.skipWaiting();
-  e.waitUntil(caches.open(C).then(c=>c.addAll(A)));
+/* Sam's Sipariş: online-first POS. Never cache authentication or order pages. */
+const LEGACY_PREFIX='sams-';
+self.addEventListener('install',()=>{self.skipWaiting()});
+self.addEventListener('activate',event=>{
+ event.waitUntil((async()=>{
+  const names=await caches.keys();
+  await Promise.all(names.filter(name=>name.startsWith(LEGACY_PREFIX)).map(name=>caches.delete(name)));
+  await self.clients.claim();
+ })());
 });
-
-self.addEventListener("activate",e=>{
-  e.waitUntil(
-    caches.keys()
-      .then(keys=>Promise.all(keys.filter(k=>k!==C).map(k=>caches.delete(k))))
-      .then(()=>self.clients.claim())
-  );
-});
-
-self.addEventListener("fetch",e=>{
-  if(e.request.method!=="GET")return;
-  e.respondWith(
-    fetch(e.request)
-      .then(r=>{
-        const copy=r.clone();
-        caches.open(C).then(c=>c.put(e.request,copy));
-        return r;
-      })
-      .catch(()=>caches.match(e.request))
-  );
-});
+/* No fetch handler: always use the network, including recovery callbacks. */
