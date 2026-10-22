@@ -889,7 +889,7 @@ if(otherTables.length)sections.push({key:'other',title:'Diğer Masalar',tables:o
 function tableCard(t){
  const o=map[t.id],sum=(o?.order_items||[]).reduce((a,x)=>a+Number(x.unit_price)*x.quantity,0);
  const number=(t.id.match(/\d+$/)||[])[0];
- const mark=t.is_custom?'ÖZ':(number?number.padStart(2,'0'):'');
+ const mark=t.is_custom?'':(number?number.padStart(2,'0'):'');
  const icon=t.is_custom?customTableIcon:standardTableIcon;
  return '<button type="button" data-table="'+esc(t.id)+'" class="'+(o?'table-open':'')+(t.is_custom?' table-custom':'')+'" aria-label="'+esc(displayTableName(t.id)+(o?', '+money(sum):', boş'))+'">'+
  (mark?'<span class="table-watermark" aria-hidden="true">'+esc(mark)+'</span>':'')+
