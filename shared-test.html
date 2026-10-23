@@ -1350,13 +1350,22 @@ async function transfer(){
  finally{state.loading=false}
 }
 async function split(){
+ if(document.getElementById('split-modal'))return;
  if(!await ensureSaved())return;
+ if(document.getElementById('split-modal'))return;
  const items=state.lines;
  if(items.some(x=>!x.id)){message('Önce siparişi kaydedin.',true);return}
  let units=[];
  items.forEach(x=>{for(let i=0;i<x.q;i++)units.push({id:x.id,n:x.n,p:x.p})});
  if(units.length>200){message('Bu masada çok fazla tekil ürün var; parça ödeme ekranı 200 ürünle sınırlı.',true);return}
- const wrap=document.createElement('div');wrap.className='panel';wrap.style.cssText='position:fixed;inset:10px;z-index:999;overflow:auto;background:#282820;border:2px solid #8a8a70';
+ const wrap=document.createElement('div');
+ wrap.id='split-modal';
+ wrap.className='panel';
+ wrap.setAttribute('role','dialog');
+ wrap.setAttribute('aria-modal','true');
+ wrap.setAttribute('aria-label','Parça Hesap');
+ // Editor sits at z-index:1500. Payment selection must be above it on every screen.
+ wrap.style.cssText='position:fixed;inset:max(10px,env(safe-area-inset-top)) 10px max(10px,env(safe-area-inset-bottom));z-index:2700;overflow:auto;max-width:none;margin:0;background:var(--paper);color:var(--ink);border:2px solid var(--sage);box-shadow:0 0 0 100vmax #0009';
  const close=()=>wrap.remove();
  wrap.innerHTML='<div class="row"><h2>Parça Hesap</h2><button id="split-dismiss" class="alt">Vazgeç</button></div><p class="note">Ödenecek ürünleri işaretleyin.</p><div id="split-rows">'+units.map((x,i)=>'<label class="row" style="padding:10px 0;border-bottom:1px solid #555"><span><input type="checkbox" data-unit="'+i+'" style="width:auto;margin-right:9px">'+esc(x.n)+'</span><b>'+money(x.p)+'</b></label>').join('')+'</div><div class="divider"></div><h3 id="split-total">0 TL</h3><div class="row"><button id="split-cash">Nakit Öde</button><button id="split-card" class="alt">Kart Öde</button></div>';
  document.body.appendChild(wrap);
