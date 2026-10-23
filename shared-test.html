@@ -1567,11 +1567,17 @@ async function audit(){
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
 
-const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor'};
+const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor',loadRequestId:0};
 const selectedTariffItems=p=>(p.payment_items||[]).filter(i=>manager.tariffFilter==='all'||(i.tariff||'normal')===manager.tariffFilter);
 const tariffFilters=()=>'<div class="row" style="justify-content:start;margin:12px 0"><button class="alt" data-tariff="all">Tümü</button><button class="alt" data-tariff="normal">Normal</button><button class="alt" data-tariff="esnaf">Esnaf</button></div>';
 function bindTariffFilters(draw){document.querySelectorAll('[data-tariff]').forEach(b=>{b.className=b.dataset.tariff===manager.tariffFilter?'':'alt';b.onclick=()=>{manager.tariffFilter=b.dataset.tariff;draw()}})}
-function filteredPaymentAmount(p){if(correctedAmount(p)===0)return 0;return selectedTariffItems(p).reduce((sum,i)=>sum+Number(i.unit_price)*Number(i.quantity),0)}
+function filteredPaymentAmount(p){
+ const amount=correctedAmount(p);
+ if(amount<=0)return 0;
+ // Financial totals come from the actual payment amount, including older payments without item rows.
+ if(manager.tariffFilter==='all')return amount;
+ return selectedTariffItems(p).reduce((sum,i)=>sum+Number(i.unit_price)*Number(i.quantity),0);
+}
 const istDate=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 const dateAt=(str)=>new Date(str+'T00:00:00+03:00');
 const dateLabel=(str)=>new Date(str+'T12:00:00+03:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
@@ -1584,7 +1590,7 @@ function managerFeedback(text,isError=false){
 }
 function managerTab(tab){
  if(state.role!=='manager')return;
- manager.tab=tab;
+ manager.tab=tab;manager.loadRequestId++;
  document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
  show('manager-date-tools',tab!=='users'&&tab!=='overview'&&tab!=='menu');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview'&&tab!=='menu');
  $('manager-content').innerHTML='';
@@ -1623,36 +1629,39 @@ async function managerPageAll(table,fields,from,to,limit=10000){
  return out;
 }
 async function managerLoad(){
- if(state.role!=='manager'||manager.tab==='users')return;
+ const requestId=++manager.loadRequestId,tab=manager.tab;
+ if(state.role!=='manager'||tab==='users'||tab==='menu')return;
  const from=$('manager-from').value,to=$('manager-to').value,today=istDate();
- if(to>today||from>today){managerFeedback('Gelecek tarih seçilemez.',true);return}
- if(!from||!to||from>to){managerFeedback('Geçerli bir başlangıç ve bitiş tarihi seçin.',true);return}
+ $('manager-from').max=$('manager-to').max=today;
+ if(to>today||from>today){$('manager-load').disabled=false;managerFeedback('Gelecek tarih seçilemez.',true);return}
+ if(!from||!to||from>to){$('manager-load').disabled=false;managerFeedback('Geçerli bir başlangıç ve bitiş tarihi seçin.',true);return}
  const days=(dateAt(to).getTime()-dateAt(from).getTime())/86400000;
- if(days>366){managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
+ if(days>366){$('manager-load').disabled=false;managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
  managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
  try{
-  const fromUTC=(manager.tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=manager.tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
+  const fromUTC=(tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
   const needPayment=['overview','reports','analysis','performance','corrections'].includes(manager.tab),needLogs=['logs','performance','overview'].includes(manager.tab);
   const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
   if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity,tariff)',fromUTC,toUTC));
  if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
- if(manager.tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
+ if(tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
   if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
   const results=await Promise.all(requested);
+  if(requestId!==manager.loadRequestId||tab!==manager.tab)return;
   if(results[0].error)throw results[0].error;
   manager.users=results[0].data||[];
   if(needPayment){manager.payments=results[1];if(results[2].error)throw results[2].error;manager.corrections=results[2].data||[];}
-  if(needLogs)manager.events=results[needPayment? (manager.tab==='overview'?4:3):1];
-  if(manager.tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
+  if(needLogs)manager.events=results[needPayment? (tab==='overview'?4:3):1];
+  if(tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
   manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
-  if(manager.tab==='overview')managerRenderOverview();
-  if(manager.tab==='performance')managerRenderPerformance();
-  if(manager.tab==='corrections')managerRenderCorrections();
-  if(manager.tab==='reports')managerRenderReports();
-  if(manager.tab==='analysis')managerRenderAnalysis();
-  if(manager.tab==='logs')managerRenderLogs();
- }catch(err){$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
- finally{$('manager-load').disabled=false}
+  if(tab==='overview')managerRenderOverview();
+  if(tab==='performance')managerRenderPerformance();
+  if(tab==='corrections')managerRenderCorrections();
+  if(tab==='reports')managerRenderReports();
+  if(tab==='analysis')managerRenderAnalysis();
+  if(tab==='logs')managerRenderLogs();
+ }catch(err){if(requestId!==manager.loadRequestId||tab!==manager.tab)return;$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
+ finally{if(requestId===manager.loadRequestId)$('manager-load').disabled=false}
 }
 function paymentCorrection(p){return manager.corrections.find(x=>x.payment_id===p.id)}
 function correctedAmount(p){return paymentCorrection(p)?.correction_type==='void'?0:Number(p.amount||0)}
@@ -2076,8 +2085,16 @@ $('manager-load').onclick=managerLoad;$('manager-today').onclick=()=>managerSetR
 $('manager-export').onclick=managerCSV;$('manager-print').onclick=()=>window.print();
 $('manager-from').value=$('manager-to').value=istDate();
 $('manager-from').max=$('manager-to').max=istDate();
-$('manager-from').addEventListener('change',()=>{$('manager-to').min=$('manager-from').value||'';});
-$('manager-to').addEventListener('change',()=>{const today=istDate();$('manager-to').max=today;if($('manager-to').value>today)$('manager-to').value=today;});
+const managerDateChanged=()=>{
+ const from=$('manager-from'),to=$('manager-to'),today=istDate();
+ from.max=today;to.max=today;to.min=from.value||'';
+ if(from.value&&to.value&&to.value<from.value)to.value=from.value;
+ if(to.value>today)to.value=today;
+ manager.loadRequestId++;$('manager-load').disabled=false;
+ managerFeedback('Tarihleri seçtikten sonra Tarih Aralığı düğmesine basın.');
+};
+$('manager-from').addEventListener('change',managerDateChanged);
+$('manager-to').addEventListener('change',managerDateChanged);
 $('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
 $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);});
