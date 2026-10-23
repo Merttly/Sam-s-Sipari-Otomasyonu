@@ -1567,7 +1567,7 @@ async function audit(){
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
 
-const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor',loadRequestId:0};
+const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor',loadRequestId:0,closedOrders:[]};
 const selectedTariffItems=p=>(p.payment_items||[]).filter(i=>manager.tariffFilter==='all'||(i.tariff||'normal')===manager.tariffFilter);
 const tariffFilters=()=>'<div class="row" style="justify-content:start;margin:12px 0"><button class="alt" data-tariff="all">Tümü</button><button class="alt" data-tariff="normal">Normal</button><button class="alt" data-tariff="esnaf">Esnaf</button></div>';
 function bindTariffFilters(draw){document.querySelectorAll('[data-tariff]').forEach(b=>{b.className=b.dataset.tariff===manager.tariffFilter?'':'alt';b.onclick=()=>{manager.tariffFilter=b.dataset.tariff;draw()}})}
@@ -1615,10 +1615,10 @@ function managerSetRange(mode){
  $('manager-from').value=from;$('manager-to').value=today;$('manager-to').min=from;
  managerLoad();
 }
-async function managerPageAll(table,fields,from,to,limit=10000){
+async function managerPageAll(table,fields,from,to,limit=10000,dateColumn='created_at'){
  const out=[];let offset=0;
  for(;;){
-  let query=db.from(table).select(fields).gte('created_at',from).lt('created_at',to).order('created_at',{ascending:true}).range(offset,offset+499);
+  let query=db.from(table).select(fields).gte(dateColumn,from).lt(dateColumn,to).order(dateColumn,{ascending:true}).range(offset,offset+499);
   const {data,error}=await query;
   if(error)throw error;
   out.push(...(data||[]));
@@ -1638,12 +1638,14 @@ async function managerLoad(){
  const days=(dateAt(to).getTime()-dateAt(from).getTime())/86400000;
  if(days>366){$('manager-load').disabled=false;managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
  managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
+ if(tab==='reports'||tab==='analysis')$('manager-content').innerHTML='<p class="note">Seçilen tarih aralığı için veriler yükleniyor…</p>';
  try{
   const fromUTC=(tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
   const needPayment=['overview','reports','analysis','performance','corrections'].includes(manager.tab),needLogs=['logs','performance','overview'].includes(manager.tab);
   const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
   if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity,tariff)',fromUTC,toUTC));
  if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
+ if(tab==='reports')requested.push(managerPageAll('orders','id,table_id,status,updated_at',fromUTC,toUTC,10000,'updated_at').then(rows=>rows.filter(o=>o.status==='closed')));
  if(tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
   if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
   const results=await Promise.all(requested);
@@ -1651,6 +1653,7 @@ async function managerLoad(){
   if(results[0].error)throw results[0].error;
   manager.users=results[0].data||[];
   if(needPayment){manager.payments=results[1];if(results[2].error)throw results[2].error;manager.corrections=results[2].data||[];}
+  if(tab==='reports')manager.closedOrders=results[3];
   if(needLogs)manager.events=results[needPayment? (tab==='overview'?4:3):1];
   if(tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
   manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
@@ -1731,14 +1734,16 @@ function managerRenderReports(){
   if(amount>0){x.count++;if(effectiveMethod(p)==='Nakit')x.cash+=amount;else if(effectiveMethod(p)==='Kart')x.card+=amount}
  });
  const items=[...groups].sort((a,b)=>b[0].localeCompare(a[0]));
- const total=items.reduce((a,[,x])=>a+x.total,0),count=items.reduce((a,[,x])=>a+x.count,0);
+ const total=items.reduce((a,[,x])=>a+x.total,0);
+ const cash=items.reduce((a,[,x])=>a+x.cash,0);
  const activeDays=items.filter(([,x])=>x.count>0).length;
+ const closedOrders=manager.closedOrders||[];
  const stat=(label,value)=>'<div class="manager-stat"><span>'+label+'</span><b>'+value+'</b></div>';
  manager.exportName='sams_gunluk_rapor';
- manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,x])=>[d,x.total,x.cash,x.card,x.count])];
+ manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Kapatılan Masa Sayısı'],...items.map(([d,x])=>[d,x.total,x.cash,x.card,closedOrders.filter(o=>istDate(new Date(o.updated_at))===d).length])];
  $('manager-content').innerHTML=tariffFilters()+
  '<h3>Günlük finansal raporlar</h3><p class="note">Seçili tarihlerdeki tahsilatların günlük dağılımı. Ürün detayları Satış Analizi bölümündedir.</p>'+
- '<div class="manager-stats">'+stat('Toplam Tahsilat',money(total))+stat('Ödeme Sayısı',String(count))+stat('Günlük Ortalama',money(activeDays?total/activeDays:0))+stat('Satış Olan Gün',String(activeDays))+'</div>'+
+ '<div class="manager-stats">'+stat('Toplam Tahsilat',money(total))+stat('Kapatılan Masa Sayısı',String(closedOrders.length))+stat('Günlük Ortalama',money(activeDays?total/activeDays:0))+stat('Nakit Tahsilat',money(cash))+'</div>'+
  (items.length?'<div class="manager-days">'+items.map(([day,x])=>'<button type="button" class="alt" data-report-day="'+esc(day)+'">'+esc(dateLabel(day))+' · '+money(x.total)+'</button>').join('')+'</div>':'<p class="note">Bu tarihlerde ödeme kaydı yok.</p>')+
  '<div id="manager-day-detail"></div><p class="note">Raporlar ödeme kayıtlarından hesaplanır; ödeme düzeltmeleri dikkate alınır. Bu işlem kayıtları değiştirmez.</p>';
  bindTariffFilters(managerRenderReports);
@@ -2091,7 +2096,8 @@ const managerDateChanged=()=>{
  if(from.value&&to.value&&to.value<from.value)to.value=from.value;
  if(to.value>today)to.value=today;
  manager.loadRequestId++;$('manager-load').disabled=false;
- managerFeedback('Tarihleri seçtikten sonra Tarih Aralığı düğmesine basın.');
+ managerFeedback('Tarih aralığı güncelleniyor…');
+ if(from.value&&to.value)managerLoad();
 };
 $('manager-from').addEventListener('change',managerDateChanged);
 $('manager-to').addEventListener('change',managerDateChanged);
