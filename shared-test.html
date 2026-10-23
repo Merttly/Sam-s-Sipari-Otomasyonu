@@ -982,6 +982,15 @@ html[data-theme="dark"] #manager-screen #manager-content .manager-analysis-table
 @media print{#manager-screen #manager-content .manager-analysis-table .sold-detail-row .sold-variant{color:#444!important}}
 /* Optical alignment: move only the Ana Sayfa house icon 2px down. */
 #pos-bottom-nav #pos-nav-tables .nav-icon svg{transform:translateY(2px)}
+/* Manager report-specific compact visuals */
+#manager-screen .manager-analysis-bars{display:grid;gap:12px;margin:12px 0 22px}
+#manager-screen .manager-analysis-bar-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:5px}
+#manager-screen .manager-analysis-bar-head span{min-width:0;overflow-wrap:anywhere}
+#manager-screen .manager-analysis-track{height:8px;background:#dce8da;border-radius:20px;overflow:hidden}
+#manager-screen .manager-analysis-fill{height:100%;background:#477d58;border-radius:20px}
+html[data-theme="dark"] #manager-screen .manager-analysis-track{background:#3b5341}
+html[data-theme="dark"] #manager-screen .manager-analysis-fill{background:#a1c7a1}
+#manager-screen .manager-days button.active{background:#245b3c;color:white}
 </style></head><body>
 <header><div><h1>SAM’S <span class="header-sub">Sipariş</span></h1><small>OTOMASYONU</small></div><div class="header-actions"><button type="button" id="theme-toggle" class="theme-toggle" aria-label="Karanlık temaya geç" aria-pressed="false" title="Açık / koyu tema"><svg class="theme-moon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5 8.7 8.7 0 1 0 20.5 14.4Z"/></svg><svg class="theme-sun" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button><button type="button" id="account-btn" class="alt account-btn hidden" aria-label="Kullanıcı paneli" title="Kullanıcı paneli" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.7"/><path d="M4.8 20v-1.1a7.2 7.2 0 0 1 14.4 0V20"/></svg></button><button id="logout" class="alt hidden">Çıkış</button></div></header>
 <section id="account-dialog" class="account-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
@@ -1057,7 +1066,7 @@ html[data-theme="dark"] #manager-screen #manager-content .manager-analysis-table
     <label>Başlangıç <input id="manager-from" type="date"></label>
     <label>Bitiş <input id="manager-to" type="date"></label>
    </div>
-   <div class="row"><button id="manager-today" class="alt">Bugün</button><button id="manager-week" class="alt">Son 7 Gün</button><button id="manager-month" class="alt">Bu Ay</button><button id="manager-load">Göster</button></div>
+   <div class="row"><button id="manager-today" class="alt">Bugün</button><button id="manager-week" class="alt">Son 7 Gün</button><button id="manager-month" class="alt">Bu Ay</button><button id="manager-load">Tarih Aralığı</button></div>
   </div>
   <div id="manager-log-filters" class="hidden manager-date-row">
    <label>Çalışan <select id="manager-person"><option value="">Tüm çalışanlar</option></select></label>
@@ -1553,11 +1562,17 @@ async function audit(){
  }).join('')||'<p class="note">Henüz işlem kaydı yok.</p>';
 }
 
-const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor'};
+const manager={tab:'overview',tariffFilter:'all',payments:[],events:[],users:[],corrections:[],filters:{},exportRows:[],exportName:'rapor',loadRequestId:0};
 const selectedTariffItems=p=>(p.payment_items||[]).filter(i=>manager.tariffFilter==='all'||(i.tariff||'normal')===manager.tariffFilter);
 const tariffFilters=()=>'<div class="row" style="justify-content:start;margin:12px 0"><button class="alt" data-tariff="all">Tümü</button><button class="alt" data-tariff="normal">Normal</button><button class="alt" data-tariff="esnaf">Esnaf</button></div>';
 function bindTariffFilters(draw){document.querySelectorAll('[data-tariff]').forEach(b=>{b.className=b.dataset.tariff===manager.tariffFilter?'':'alt';b.onclick=()=>{manager.tariffFilter=b.dataset.tariff;draw()}})}
-function filteredPaymentAmount(p){if(correctedAmount(p)===0)return 0;return selectedTariffItems(p).reduce((sum,i)=>sum+Number(i.unit_price)*Number(i.quantity),0)}
+function filteredPaymentAmount(p){
+ const amount=correctedAmount(p);
+ if(amount<=0)return 0;
+ // Financial totals come from the actual payment amount, including older payments without item rows.
+ if(manager.tariffFilter==='all')return amount;
+ return selectedTariffItems(p).reduce((sum,i)=>sum+Number(i.unit_price)*Number(i.quantity),0);
+}
 const istDate=(date=new Date())=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 const dateAt=(str)=>new Date(str+'T00:00:00+03:00');
 const dateLabel=(str)=>new Date(str+'T12:00:00+03:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Istanbul'});
@@ -1570,7 +1585,7 @@ function managerFeedback(text,isError=false){
 }
 function managerTab(tab){
  if(state.role!=='manager')return;
- manager.tab=tab;
+ manager.tab=tab;manager.loadRequestId++;
  document.querySelectorAll('[data-manager-tab]').forEach(b=>b.classList.toggle('active',b.dataset.managerTab===tab));
  show('manager-date-tools',tab!=='users'&&tab!=='overview'&&tab!=='menu');show('manager-log-filters',tab==='logs');show('manager-exports',tab!=='users'&&tab!=='overview'&&tab!=='menu');
  $('manager-content').innerHTML='';
@@ -1589,9 +1604,10 @@ function managerBack(){
 }
 function managerSetRange(mode){
  const today=istDate(),now=dateAt(today);let from=today;
+ $('manager-from').max=today;$('manager-to').max=today;
  if(mode==='week'){const d=new Date(now.getTime()-6*86400000);from=istDate(d)}
  if(mode==='month')from=today.slice(0,8)+'01';
- $('manager-from').value=from;$('manager-to').value=today;
+ $('manager-from').value=from;$('manager-to').value=today;$('manager-to').min=from;
  managerLoad();
 }
 async function managerPageAll(table,fields,from,to,limit=10000){
@@ -1608,35 +1624,39 @@ async function managerPageAll(table,fields,from,to,limit=10000){
  return out;
 }
 async function managerLoad(){
- if(state.role!=='manager'||manager.tab==='users')return;
- const from=$('manager-from').value,to=$('manager-to').value;
- if(!from||!to||from>to){managerFeedback('Geçerli bir başlangıç ve bitiş tarihi seçin.',true);return}
+ const requestId=++manager.loadRequestId,tab=manager.tab;
+ if(state.role!=='manager'||tab==='users'||tab==='menu')return;
+ const from=$('manager-from').value,to=$('manager-to').value,today=istDate();
+ $('manager-from').max=$('manager-to').max=today;
+ if(to>today||from>today){$('manager-load').disabled=false;managerFeedback('Gelecek tarih seçilemez.',true);return}
+ if(!from||!to||from>to){$('manager-load').disabled=false;managerFeedback('Geçerli bir başlangıç ve bitiş tarihi seçin.',true);return}
  const days=(dateAt(to).getTime()-dateAt(from).getTime())/86400000;
- if(days>366){managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
+ if(days>366){$('manager-load').disabled=false;managerFeedback('En fazla 1 yıllık tarih aralığı seçin.',true);return}
  managerFeedback('Kayıtlar yükleniyor…');$('manager-load').disabled=true;
  try{
-  const fromUTC=(manager.tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=manager.tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
+  const fromUTC=(tab==='overview'?new Date(dateAt(istDate()).getTime()-30*86400000):dateAt(from)).toISOString(),toUTC=tab==='overview'?isoDay(dateAt(istDate())):isoDay(dateAt(to));
   const needPayment=['overview','reports','analysis','performance','corrections'].includes(manager.tab),needLogs=['logs','performance','overview'].includes(manager.tab);
   const requested=[db.from('staff_accounts').select('user_id,display_name,role,active')];
   if(needPayment)requested.push(managerPageAll('payments','id,amount,payment_method,created_at,order_id,payment_items(product_name,unit_price,quantity,tariff)',fromUTC,toUTC));
  if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
- if(manager.tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
+ if(tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
   if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
   const results=await Promise.all(requested);
+  if(requestId!==manager.loadRequestId||tab!==manager.tab)return;
   if(results[0].error)throw results[0].error;
   manager.users=results[0].data||[];
   if(needPayment){manager.payments=results[1];if(results[2].error)throw results[2].error;manager.corrections=results[2].data||[];}
-  if(needLogs)manager.events=results[needPayment? (manager.tab==='overview'?4:3):1];
-  if(manager.tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
+  if(needLogs)manager.events=results[needPayment? (tab==='overview'?4:3):1];
+  if(tab==='overview'){const orderResult=results[3];if(orderResult.error)throw orderResult.error;manager.openOrders=orderResult.data||[];}
   manager.filters={from,to};managerFeedback('Tarih aralığı: '+dateLabel(from)+' – '+dateLabel(to));
-  if(manager.tab==='overview')managerRenderOverview();
-  if(manager.tab==='performance')managerRenderPerformance();
-  if(manager.tab==='corrections')managerRenderCorrections();
-  if(manager.tab==='reports')managerRenderReports();
-  if(manager.tab==='analysis')managerRenderAnalysis();
-  if(manager.tab==='logs')managerRenderLogs();
- }catch(err){$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
- finally{$('manager-load').disabled=false}
+  if(tab==='overview')managerRenderOverview();
+  if(tab==='performance')managerRenderPerformance();
+  if(tab==='corrections')managerRenderCorrections();
+  if(tab==='reports')managerRenderReports();
+  if(tab==='analysis')managerRenderAnalysis();
+  if(tab==='logs')managerRenderLogs();
+ }catch(err){if(requestId!==manager.loadRequestId||tab!==manager.tab)return;$('manager-content').innerHTML='<p class="note">Veriler görüntülenemedi.</p>';managerFeedback('Rapor hatası: '+err.message,true)}
+ finally{if(requestId===manager.loadRequestId)$('manager-load').disabled=false}
 }
 function paymentCorrection(p){return manager.corrections.find(x=>x.payment_id===p.id)}
 function correctedAmount(p){return paymentCorrection(p)?.correction_type==='void'?0:Number(p.amount||0)}
@@ -1697,40 +1717,56 @@ function managerOverview(payments){
  return '<div class="manager-stats">'+[['Toplam Tahsilat',money(total)],['Nakit',money(cash)],['Kart',money(card)],['Geçerli Ödeme',String(payments.filter(p=>correctedAmount(p)>0).length)]].map(x=>'<div class="manager-stat"><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('')+'</div>';
 }
 function managerRenderReports(){
- const rows=manager.payments,groups=new Map();
- rows.forEach(p=>{const day=istDate(new Date(p.created_at));if(!groups.has(day))groups.set(day,{total:0,cash:0,card:0,count:0});
- const x=groups.get(day),amount=filteredPaymentAmount(p);x.total+=amount;if(amount>0)x.count++;
- if(effectiveMethod(p)==='Nakit')x.cash+=amount;else if(effectiveMethod(p)==='Kart')x.card+=amount;});
+ const groups=new Map();
+ manager.payments.forEach(p=>{
+  const day=istDate(new Date(p.created_at)),amount=filteredPaymentAmount(p);
+  if(!groups.has(day))groups.set(day,{total:0,cash:0,card:0,count:0});
+  const x=groups.get(day);x.total+=amount;
+  if(amount>0){x.count++;if(effectiveMethod(p)==='Nakit')x.cash+=amount;else if(effectiveMethod(p)==='Kart')x.card+=amount}
+ });
  const items=[...groups].sort((a,b)=>b[0].localeCompare(a[0]));
- let selected=manager.selectedDay;if(!groups.has(selected))selected='';
- manager.exportName='sams_gunluk_rapor';manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,v])=>[d,v.total,v.cash,v.card,v.count])];
- $('manager-content').innerHTML=tariffFilters()+'<h3>Günlük satış arşivi</h3>'+
- (items.length?'<div class="manager-days">'+items.map(([day,x])=>'<button class="alt" data-report-day="'+esc(day)+'">'+esc(dateLabel(day))+' · '+money(x.total)+'</button>').join('')+'</div>':'<p class="note">Bu tarihlerde ödeme kaydı yok.</p>')+
- '<div id="manager-day-detail"></div><p class="note">Raporlar ödeme kayıtlarından hesaplanır. Tarih değiştirince geçmiş günler yeniden görüntülenebilir. Bu işlem kayıtları kapatmaz veya silmez.</p>';
+ const total=items.reduce((a,[,x])=>a+x.total,0),count=items.reduce((a,[,x])=>a+x.count,0);
+ const activeDays=items.filter(([,x])=>x.count>0).length;
+ const stat=(label,value)=>'<div class="manager-stat"><span>'+label+'</span><b>'+value+'</b></div>';
+ manager.exportName='sams_gunluk_rapor';
+ manager.exportRows=[['Tarih','Toplam (TL)','Nakit (TL)','Kart (TL)','Ödeme Sayısı'],...items.map(([d,x])=>[d,x.total,x.cash,x.card,x.count])];
+ $('manager-content').innerHTML=tariffFilters()+
+ '<h3>Günlük finansal raporlar</h3><p class="note">Seçili tarihlerdeki tahsilatların günlük dağılımı. Ürün detayları Satış Analizi bölümündedir.</p>'+
+ '<div class="manager-stats">'+stat('Toplam Tahsilat',money(total))+stat('Ödeme Sayısı',String(count))+stat('Günlük Ortalama',money(activeDays?total/activeDays:0))+stat('Satış Olan Gün',String(activeDays))+'</div>'+
+ (items.length?'<div class="manager-days">'+items.map(([day,x])=>'<button type="button" class="alt" data-report-day="'+esc(day)+'">'+esc(dateLabel(day))+' · '+money(x.total)+'</button>').join('')+'</div>':'<p class="note">Bu tarihlerde ödeme kaydı yok.</p>')+
+ '<div id="manager-day-detail"></div><p class="note">Raporlar ödeme kayıtlarından hesaplanır; ödeme düzeltmeleri dikkate alınır. Bu işlem kayıtları değiştirmez.</p>';
  bindTariffFilters(managerRenderReports);
  document.querySelectorAll('[data-report-day]').forEach(b=>b.onclick=()=>managerDayDetail(b.dataset.reportDay));
- if(selected)managerDayDetail(selected);
+ if(manager.selectedDay&&groups.has(manager.selectedDay))managerDayDetail(manager.selectedDay);
 }
 function managerDayDetail(day){
  const payments=manager.payments.filter(p=>istDate(new Date(p.created_at))===day);
  manager.selectedDay=day;
- const items=groupSoldProducts(payments.filter(p=>correctedAmount(p)>0).flatMap(p=>selectedTariffItems(p)));
- $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+'<div class="manager-stats"><div class="manager-stat"><span>Filtrelenen Tahsilat</span><b>'+money(payments.reduce((v,p)=>v+filteredPaymentAmount(p),0))+'</b></div></div><h4>Satılan ürünler</h4>'+
- (items.length?'<table class="manager-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+
- items.map(i=>'<tr class="sold-product-row'+(i.variants.length>1?' with-variants':'')+'"><td>'+esc(soldProductLabel(i))+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>'+
- (i.variants.length>1?'<tr class="sold-detail-row"><td colspan="3">'+renderSoldVariants(i)+'</td></tr>':'')).join('')+
- '</tbody></table>':'<p>Ürün kaydı yok.</p>');
- manager.exportName='sams_gunluk_'+day;
- manager.exportRows=[['Tarih','Ödeme Zamanı','Tür','Tutar (TL)'],...payments.map(x=>[day,new Date(x.created_at).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul'}),effectiveMethod(x),filteredPaymentAmount(x)])];
+ const total=payments.reduce((a,p)=>a+filteredPaymentAmount(p),0);
+ const cash=payments.filter(p=>effectiveMethod(p)==='Nakit').reduce((a,p)=>a+filteredPaymentAmount(p),0);
+ const card=payments.filter(p=>effectiveMethod(p)==='Kart').reduce((a,p)=>a+filteredPaymentAmount(p),0);
+ const count=payments.filter(p=>filteredPaymentAmount(p)>0).length;
+ const stat=(label,value)=>'<div class="manager-stat"><span>'+label+'</span><b>'+value+'</b></div>';
+ $('manager-day-detail').innerHTML='<div class="divider"></div><h3>'+esc(dateLabel(day))+'</h3>'+
+ '<div class="manager-stats">'+stat('Toplam Tahsilat',money(total))+stat('Nakit',money(cash))+stat('Kart',money(card))+stat('Ödeme Sayısı',String(count))+'</div>'+
+ '<p class="note">Bu günün ürün bazlı dağılımını Satış Analizi bölümünden aynı tarihi seçerek inceleyebilirsiniz.</p>';
+ document.querySelectorAll('[data-report-day]').forEach(b=>b.classList.toggle('active',b.dataset.reportDay===day));
 }
 function managerRenderAnalysis(){
  const items=groupSoldProducts(manager.payments.filter(p=>correctedAmount(p)>0)
-   .flatMap(p=>selectedTariffItems(p))).sort((a,b)=>b.amount-a.amount||a.name.localeCompare(b.name,'tr'));
+  .flatMap(p=>selectedTariffItems(p))).sort((a,b)=>b.amount-a.amount||a.name.localeCompare(b.name,'tr'));
+ const units=items.reduce((a,p)=>a+p.q,0),revenue=items.reduce((a,p)=>a+p.amount,0);
+ const normal=items.reduce((a,p)=>a+p.variants.filter(v=>v.tariff==='normal').reduce((b,v)=>b+v.amount,0),0);
+ const esnaf=items.reduce((a,p)=>a+p.variants.filter(v=>v.tariff==='esnaf').reduce((b,v)=>b+v.amount,0),0);
+ const stat=(label,value)=>'<div class="manager-stat"><span>'+label+'</span><b>'+value+'</b></div>';
  manager.exportName='sams_satis_analizi';
  manager.exportRows=[['Ürün','Tarife','Birim Fiyat (TL)','Satılan Adet','Ciro (TL)'],
   ...items.flatMap(p=>p.variants.map(v=>[p.name,v.tariff==='esnaf'?'Esnaf':'Normal',v.price,v.q,v.amount]))];
- $('manager-content').innerHTML=tariffFilters()+'<h3>Ürün satış analizi</h3>'+
- (items.length?'<table class="manager-table manager-analysis-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+
+ $('manager-content').innerHTML=tariffFilters()+
+ '<h3>Ürün satış analizi</h3><p class="note">En yüksek cirodan en düşüğe ürün performansı. Normal ve Esnaf tarifesi ayrıntıları ürünlerin altında gösterilir.</p>'+
+ '<div class="manager-stats">'+stat('Satılan Ürün Adedi',String(units))+stat('Ürün Çeşidi',String(items.length))+stat('Normal Tarife Cirosu',money(normal))+stat('Esnaf Tarife Cirosu',money(esnaf))+'</div>'+
+ (items.length?'<h4>En Çok Ciro Getiren Ürünler</h4><div class="manager-analysis-bars">'+items.slice(0,5).map((p,i)=>'<div class="manager-analysis-bar"><div class="manager-analysis-bar-head"><span>'+esc(p.name)+'</span><b>'+money(p.amount)+'</b></div><div class="manager-analysis-track"><div class="manager-analysis-fill" style="width:'+Math.max(0,Math.min(100,p.amount/(items[0].amount||1)*100))+'%"></div></div></div>').join('')+'</div>'+
+ '<h4>Tüm Ürünler</h4><table class="manager-table manager-analysis-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+
  items.map(i=>'<tr class="sold-product-row'+(i.variants.length>1?' with-variants':'')+'"><td>'+esc(soldProductLabel(i))+'</td><td>'+i.q+'</td><td>'+money(i.amount)+'</td></tr>'+
  (i.variants.length>1?'<tr class="sold-detail-row"><td colspan="3">'+renderSoldVariants(i)+'</td></tr>':'')).join('')+
  '</tbody></table>':'<p class="note">Bu aralıkta satılan ürün yok.</p>');
@@ -2042,7 +2078,19 @@ $('manager-dashboard').onclick=()=>managerOpen('overview');$('manager-back').onc
 document.querySelectorAll('[data-manager-tab]').forEach(b=>b.onclick=()=>managerTab(b.dataset.managerTab));
 $('manager-load').onclick=managerLoad;$('manager-today').onclick=()=>managerSetRange('today');$('manager-week').onclick=()=>managerSetRange('week');$('manager-month').onclick=()=>managerSetRange('month');
 $('manager-export').onclick=managerCSV;$('manager-print').onclick=()=>window.print();
-$('manager-from').value=$('manager-to').value=istDate();$('summary-close').onclick=()=>show('summary',false);
+$('manager-from').value=$('manager-to').value=istDate();
+$('manager-from').max=$('manager-to').max=istDate();
+const managerDateChanged=()=>{
+ const from=$('manager-from'),to=$('manager-to'),today=istDate();
+ from.max=today;to.max=today;to.min=from.value||'';
+ if(from.value&&to.value&&to.value<from.value)to.value=from.value;
+ if(to.value>today)to.value=today;
+ manager.loadRequestId++;$('manager-load').disabled=false;
+ managerFeedback('Tarihleri seçtikten sonra Tarih Aralığı düğmesine basın.');
+};
+$('manager-from').addEventListener('change',managerDateChanged);
+$('manager-to').addEventListener('change',managerDateChanged);
+$('summary-close').onclick=()=>show('summary',false);
 $('pay-cash').onclick=()=>pay('Nakit');$('pay-card').onclick=()=>pay('Kart');
 $('note').addEventListener('input',()=>{state.note=$('note').value;state.dirty=true;show('dirty-notice',true);});
 db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'&&session?.user){verifiedRecovery=true;state.user=session.user;show('account-btn',true);show('logout',true);showAccountPanel(true);return}if(!session?.user){state.user=null;show('account-btn',false);show('auth',true);show('workspace',false);show('manager-screen',false)}});
