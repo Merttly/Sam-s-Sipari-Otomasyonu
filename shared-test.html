@@ -994,6 +994,12 @@ html[data-theme="dark"] #manager-screen #manager-content .manager-analysis-table
 #manager-screen #manager-date-tools .manager-date-row input[type="date"]{display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:8px 6px;font-size:clamp(11px,3.2vw,13px);text-align:center;overflow:hidden;-webkit-appearance:none;appearance:none}
 #manager-screen #manager-date-tools .manager-date-row input[type="date"]::-webkit-date-and-time-value{min-width:0;width:100%;text-align:center}
 #manager-screen #manager-date-tools .manager-date-row input[type="date"]::-webkit-datetime-edit{min-width:0;max-width:100%;padding:0}
+/* User performance: fixed columns and aligned numeric headers/cells on mobile. */
+#manager-screen .manager-performance-table{table-layout:fixed;width:100%;border-collapse:collapse}
+#manager-screen .manager-performance-table th,#manager-screen .manager-performance-table td{box-sizing:border-box;vertical-align:middle;padding:10px 5px}
+#manager-screen .manager-performance-table th:first-child,#manager-screen .manager-performance-table td:first-child{text-align:left;overflow-wrap:anywhere}
+#manager-screen .manager-performance-table th:not(:first-child),#manager-screen .manager-performance-table td:not(:first-child){text-align:center}
+#manager-screen .manager-performance-table th{font-size:clamp(10px,2.9vw,13px);line-height:1.25;overflow-wrap:normal}
 /* High contrast section headings in Sales Analysis (light and dark themes). */
 #manager-screen #manager-content>h4{color:#263e31;font-weight:750;opacity:1}
 html[data-theme="dark"] #manager-screen #manager-content>h4{color:#eaf2e4}
@@ -1706,8 +1712,8 @@ function managerRenderPerformance(){
  const rows=[...stats.values()];
  manager.exportName='sams_kullanici_performansi';
  manager.exportRows=[['Kullanıcı','Sipariş Kaydı','Ödeme İşlemi','Ödeme Düzeltmesi'],...rows.map(x=>[x.name,x.orders,x.payments,x.changes])];
- $('manager-content').innerHTML='<h3>Kullanıcı bazlı operasyon</h3><p class="note">Sipariş kayıtları ve ödeme işlemleri kullanıcı hareketlerinden sayılır; satış tutarı kişiye atanmaz.</p>'+
- '<table class="manager-table"><thead><tr><th>Kullanıcı</th><th>Sipariş kaydı</th><th>Ödeme</th><th>Düzeltme</th></tr></thead><tbody>'+
+ $('manager-content').innerHTML='<h3>Kullanıcı Bazlı Operasyon</h3><p class="note">Sipariş kayıtları ve ödeme işlemleri kullanıcı hareketlerinden sayılır; satış tutarı kişiye atanmaz.</p>'+
+ '<table class="manager-table manager-performance-table"><colgroup><col style="width:32%"><col style="width:27%"><col style="width:19%"><col style="width:22%"></colgroup><thead><tr><th>Kullanıcı</th><th>Sipariş Kaydı</th><th>Ödeme</th><th>Düzeltme</th></tr></thead><tbody>'+
  rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.orders+'</td><td>'+x.payments+'</td><td>'+x.changes+'</td></tr>').join('')+'</tbody></table>';
 }
 function managerRenderCorrections(){
