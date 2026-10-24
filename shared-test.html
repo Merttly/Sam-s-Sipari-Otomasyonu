@@ -1664,7 +1664,7 @@ async function managerLoad(){
  if(needPayment)requested.push(db.from('payment_corrections').select('id,payment_id,correction_type,replacement_method,reason,manager_id,created_at'));
  if(tab==='reports')requested.push(managerPageAll('orders','id,table_id,status,updated_at,payments(id,amount,payment_items(unit_price,quantity,tariff),payment_corrections(correction_type))',fromUTC,toUTC,10000,'updated_at').then(rows=>rows.filter(o=>o.status==='closed')));
  if(tab==='overview')requested.push(db.from('orders').select('id,table_id,order_items(unit_price,quantity)').eq('status','open'));
-  if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',fromUTC,toUTC));
+  if(needLogs)requested.push(managerPageAll('audit_events','id,event_type,table_id,details,created_at,actor_id',tab==='performance'?'2020-01-01T00:00:00.000Z':fromUTC,toUTC));
   const results=await Promise.all(requested);
   if(requestId!==manager.loadRequestId||tab!==manager.tab)return;
   if(results[0].error)throw results[0].error;
@@ -1706,15 +1706,32 @@ function managerRenderOverview(){
  $('overview-refresh').onclick=()=>managerLoad();
 }
 function managerRenderPerformance(){
- const people=new Map(manager.users.map(u=>[u.user_id,u.display_name]));
- const stats=new Map(manager.users.map(u=>[u.user_id,{name:u.display_name,orders:0,payments:0,changes:0}]));
- manager.events.forEach(e=>{const x=stats.get(e.actor_id);if(!x)return;if(e.event_type==='order_saved')x.orders++;if(e.event_type==='payment')x.payments++;if(e.event_type==='payment_correction')x.changes++;});
+ const stats=new Map(manager.users.map(u=>[u.user_id,{name:u.display_name,orders:0,payments:0,amount:0}]));
+ const previousByOrder=new Map();
+ const fromTime=dateAt(manager.filters.from).getTime(),toTime=dateAt(manager.filters.to).getTime()+86400000;
+ const ordered=[...manager.events].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)||Number(a.id)-Number(b.id));
+ for(const e of ordered){
+  const details=e.details||{};
+  const inRange=new Date(e.created_at).getTime()>=fromTime&&new Date(e.created_at).getTime()<toTime;
+  const x=stats.get(e.actor_id);
+  if(e.event_type==='order_saved'){
+   const key=details.order_id!=null?'order:'+details.order_id:'table:'+e.table_id;
+   const current=Array.isArray(details.items)?details.items.reduce((sum,i)=>sum+(Number(i.p)||0)*(Number(i.q)||0),0):null;
+   const previous=previousByOrder.get(key)||0;
+   if(current!==null){
+    if(inRange&&x){x.orders++;x.amount+=current-previous}
+    previousByOrder.set(key,current);
+   }else if(inRange&&x)x.orders++;
+  }else if(e.event_type==='payment'){
+   if(inRange&&x)x.payments++;
+  }
+ }
  const rows=[...stats.values()];
  manager.exportName='sams_kullanici_performansi';
- manager.exportRows=[['Kullanıcı','Sipariş Kaydı','Ödeme İşlemi','Ödeme Düzeltmesi'],...rows.map(x=>[x.name,x.orders,x.payments,x.changes])];
- $('manager-content').innerHTML='<h3>Kullanıcı Bazlı Operasyon</h3><p class="note">Sipariş kayıtları ve ödeme işlemleri kullanıcı hareketlerinden sayılır; satış tutarı kişiye atanmaz.</p>'+
- '<table class="manager-table manager-performance-table"><colgroup><col style="width:32%"><col style="width:27%"><col style="width:19%"><col style="width:22%"></colgroup><thead><tr><th>Kullanıcı</th><th>Sipariş Kaydı</th><th>Ödeme</th><th>Düzeltme</th></tr></thead><tbody>'+
- rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.orders+'</td><td>'+x.payments+'</td><td>'+x.changes+'</td></tr>').join('')+'</tbody></table>';
+ manager.exportRows=[['Kullanıcı','Sipariş Kaydı','Alınan Ödeme','Toplam Sipariş Tutarı (TL)'],...rows.map(x=>[x.name,x.orders,x.payments,Math.round(x.amount*100)/100])];
+ $('manager-content').innerHTML='<h3>Kullanıcı Bazlı Operasyon</h3><p class="note">Sipariş tutarı, kullanıcının kaydettiği siparişlerdeki net tutar değişimidir; aynı ürünler tekrar sayılmaz. Azaltılan veya çıkarılan ürünler tutardan düşülür. Alınan Ödeme işlem adedidir.</p>'+
+ '<table class="manager-table manager-performance-table"><colgroup><col style="width:26%"><col style="width:22%"><col style="width:21%"><col style="width:31%"></colgroup><thead><tr><th>Kullanıcı</th><th>Sipariş Kaydı</th><th>Alınan Ödeme</th><th>Toplam Sipariş Tutarı</th></tr></thead><tbody>'+
+ rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+x.orders+'</td><td>'+x.payments+'</td><td>'+money(x.amount)+'</td></tr>').join('')+'</tbody></table>';
 }
 function managerRenderCorrections(){
  const people=new Map(manager.users.map(x=>[x.user_id,x.display_name]));
