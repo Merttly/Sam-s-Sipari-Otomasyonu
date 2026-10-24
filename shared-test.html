@@ -982,6 +982,9 @@ html[data-theme="dark"] #manager-screen #manager-content .manager-analysis-table
 @media print{#manager-screen #manager-content .manager-analysis-table .sold-detail-row .sold-variant{color:#444!important}}
 /* Optical alignment: move only the Ana Sayfa house icon 2px down. */
 #pos-bottom-nav #pos-nav-tables .nav-icon svg{transform:translateY(2px)}
+/* High contrast section headings in Sales Analysis (light and dark themes). */
+#manager-screen #manager-content>h4{color:#263e31;font-weight:750;opacity:1}
+html[data-theme="dark"] #manager-screen #manager-content>h4{color:#eaf2e4}
 /* Manager report-specific compact visuals */
 #manager-screen .manager-analysis-bars{display:grid;gap:12px;margin:12px 0 22px}
 #manager-screen .manager-analysis-bar-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:5px}
@@ -1777,7 +1780,7 @@ function managerRenderAnalysis(){
  manager.exportRows=[['Ürün','Tarife','Birim Fiyat (TL)','Satılan Adet','Ciro (TL)'],
   ...items.flatMap(p=>p.variants.map(v=>[p.name,v.tariff==='esnaf'?'Esnaf':'Normal',v.price,v.q,v.amount]))];
  $('manager-content').innerHTML=tariffFilters()+
- '<h3>Ürün satış analizi</h3><p class="note">En yüksek cirodan en düşüğe ürün performansı. Normal ve Esnaf tarifesi ayrıntıları ürünlerin altında gösterilir.</p>'+
+ '<h3>Ürün Satış Analizi</h3><p class="note">En yüksek cirodan en düşüğe ürün performansı. Normal ve Esnaf tarifesi ayrıntıları ürünlerin altında gösterilir.</p>'+
  '<div class="manager-stats">'+stat('Satılan Ürün Adedi',String(units))+stat('Ürün Çeşidi',String(items.length))+stat('Normal Tarife Cirosu',money(normal))+stat('Esnaf Tarife Cirosu',money(esnaf))+'</div>'+
  (items.length?'<h4>En Çok Ciro Getiren Ürünler</h4><div class="manager-analysis-bars">'+items.slice(0,5).map((p,i)=>'<div class="manager-analysis-bar"><div class="manager-analysis-bar-head"><span>'+esc(p.name)+'</span><b>'+money(p.amount)+'</b></div><div class="manager-analysis-track"><div class="manager-analysis-fill" style="width:'+Math.max(0,Math.min(100,p.amount/(items[0].amount||1)*100))+'%"></div></div></div>').join('')+'</div>'+
  '<h4>Tüm Ürünler</h4><table class="manager-table manager-analysis-table"><thead><tr><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead><tbody>'+
