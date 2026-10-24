@@ -1739,7 +1739,7 @@ function managerRenderReports(){
  const activeDays=items.filter(([,x])=>x.count>0).length;
  const closedOrders=manager.closedOrders||[];
  const orderAmount=o=>(o.payments||[]).reduce((sum,p)=>{
-  if((p.payment_corrections||[]).some(c=>c.correction_type==='void'))return sum;
+  if((Array.isArray(p.payment_corrections)?p.payment_corrections:p.payment_corrections?[p.payment_corrections]:[]).some(c=>c.correction_type==='void'))return sum;
   if(manager.tariffFilter==='all')return sum+Number(p.amount||0);
   return sum+(p.payment_items||[]).filter(i=>(i.tariff||'normal')===manager.tariffFilter)
    .reduce((a,i)=>a+Number(i.unit_price)*Number(i.quantity),0);
