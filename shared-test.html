@@ -1000,6 +1000,12 @@ html[data-theme="dark"] #manager-screen #manager-content .manager-analysis-table
 #manager-screen .manager-performance-table th:first-child,#manager-screen .manager-performance-table td:first-child{text-align:left;overflow-wrap:anywhere}
 #manager-screen .manager-performance-table th:not(:first-child),#manager-screen .manager-performance-table td:not(:first-child){text-align:center}
 #manager-screen .manager-performance-table th{font-size:clamp(10px,2.9vw,13px);line-height:1.25;overflow-wrap:normal}
+/* Keep sales analysis quantities and currency values on one line on narrow screens. */
+#manager-screen .manager-analysis-table{table-layout:fixed;width:100%}
+#manager-screen .manager-analysis-table th:first-child,#manager-screen .manager-analysis-table td:first-child{width:47%;overflow-wrap:anywhere}
+#manager-screen .manager-analysis-table th:nth-child(2),#manager-screen .manager-analysis-table td:nth-child(2){width:15%;text-align:center;white-space:nowrap}
+#manager-screen .manager-analysis-table th:nth-child(3),#manager-screen .manager-analysis-table td:nth-child(3){width:38%;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+#manager-screen .manager-analysis-table th,#manager-screen .manager-analysis-table td{box-sizing:border-box;padding:9px 3px}
 /* High contrast section headings in Sales Analysis (light and dark themes). */
 #manager-screen #manager-content>h4{color:#263e31;font-weight:750;opacity:1}
 html[data-theme="dark"] #manager-screen #manager-content>h4{color:#eaf2e4}
